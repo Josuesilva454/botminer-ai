@@ -1,0 +1,527 @@
+
+
+.page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 32px;
+  box-sizing: border-box;
+
+  background:
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(34, 197, 94, 0.08),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 15%,
+      rgba(59, 130, 246, 0.06),
+      transparent 30%
+    ),
+    #07110d;
+
+  color: #f1f5f9;
+}
+
+/* =========================================
+   Título
+   ========================================= */
+
+.page-title {
+  margin-bottom: 28px;
+}
+
+.page-title h1 {
+  margin: 0 0 8px;
+
+  color: #f8fafc;
+
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 800;
+
+  letter-spacing: -0.8px;
+}
+
+.page-title p {
+  margin: 0;
+
+  color: #82948b;
+
+  font-size: 15px;
+}
+
+/* =========================================
+   Painel do formulário
+   ========================================= */
+
+.form-panel {
+  position: relative;
+
+  width: 100%;
+  max-width: 1000px;
+
+  padding: 30px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #1d3027;
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(16, 32, 24, 0.96),
+      rgba(8, 19, 14, 0.98)
+    );
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+
+  overflow: hidden;
+}
+
+.form-panel::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 1px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(74, 222, 128, 0.5),
+    transparent
+  );
+}
+
+/* =========================================
+   Grid
+   ========================================= */
+
+.form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 20px;
+}
+
+/* =========================================
+   Grupo do formulário
+   ========================================= */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  color: #a7b7af;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* =========================================
+   Inputs e Select
+   ========================================= */
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  height: 48px;
+
+  padding: 0 14px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #263b31;
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #09150f;
+
+  color: #e8f0eb;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.form-group input::placeholder {
+  color: #52645b;
+}
+
+.form-group input:hover,
+.form-group select:hover {
+  border-color: #355043;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #22c55e;
+
+  background: #0b1912;
+
+  box-shadow:
+    0 0 0 3px rgba(34, 197, 94, 0.10);
+}
+
+/* =========================================
+   Select
+   ========================================= */
+
+.form-group select {
+  cursor: pointer;
+
+  appearance: auto;
+}
+
+.form-group select option {
+  background: #0b1912;
+  color: #f1f5f9;
+}
+
+/* =========================================
+   Documentação
+   ========================================= */
+
+.upload {
+  margin-top: 28px;
+
+  padding: 24px;
+
+  border: 1px dashed #315040;
+  border-radius: 14px;
+
+  background:
+    rgba(3, 12, 8, 0.35);
+
+  text-align: center;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.upload:hover {
+  border-color: #22c55e;
+
+  background:
+    rgba(34, 197, 94, 0.035);
+}
+
+.upload h3 {
+  margin: 0 0 7px;
+
+  color: #e9f1ec;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.upload p {
+  margin: 0 0 18px;
+
+  color: #718078;
+
+  font-size: 13px;
+}
+
+/* =========================================
+   Input de arquivo
+   ========================================= */
+
+.upload input[type="file"] {
+  display: block;
+
+  width: 100%;
+
+  max-width: 500px;
+
+  margin: 0 auto;
+
+  padding: 10px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #263b31;
+  border-radius: 9px;
+
+  background: #09150f;
+
+  color: #8fa198;
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.upload input[type="file"]::file-selector-button {
+  margin-right: 12px;
+
+  padding: 8px 14px;
+
+  border: 1px solid #285037;
+  border-radius: 7px;
+
+  background: #10251a;
+
+  color: #4ade80;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.upload input[type="file"]::file-selector-button:hover {
+  background: #153322;
+}
+
+/* =========================================
+   Ações
+   ========================================= */
+
+.actions {
+  display: flex;
+
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 12px;
+
+  margin-top: 28px;
+
+  padding-top: 22px;
+
+  border-top: 1px solid #1a2c24;
+}
+
+/* =========================================
+   Botão secundário
+   ========================================= */
+
+.secondary-button {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 46px;
+
+  padding: 0 22px;
+
+  border: 1px solid #2a3d34;
+  border-radius: 10px;
+
+  background: #0b1711;
+
+  color: #aab8b1;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.secondary-button:hover {
+  background: #102119;
+
+  border-color: #40584b;
+
+  color: #ffffff;
+
+  transform: translateY(-1px);
+}
+
+/* =========================================
+   Botão principal
+   ========================================= */
+
+.primary-button {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 46px;
+
+  padding: 0 24px;
+
+  border: 1px solid #22c55e;
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #16a34a,
+      #22c55e
+    );
+
+  color: #031109;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 24px rgba(34, 197, 94, 0.16);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+
+  filter: brightness(1.08);
+
+  box-shadow:
+    0 12px 30px rgba(34, 197, 94, 0.25);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+
+  transform: none;
+
+  box-shadow: none;
+}
+
+/* =========================================
+   Animação
+   ========================================= */
+
+.form-panel {
+  animation: createAssetFade 0.45s ease both;
+}
+
+@keyframes createAssetFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================
+   Tablet
+   ========================================= */
+
+@media (max-width: 800px) {
+  .page {
+    padding: 24px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-panel {
+    max-width: 100%;
+  }
+}
+
+/* =========================================
+   Mobile
+   ========================================= */
+
+@media (max-width: 600px) {
+  .page {
+    padding: 18px;
+  }
+
+  .page-title h1 {
+    font-size: 28px;
+  }
+
+  .page-title p {
+    font-size: 14px;
+  }
+
+  .form-panel {
+    padding: 20px;
+
+    border-radius: 15px;
+  }
+
+  .form-grid {
+    gap: 16px;
+  }
+
+  .upload {
+    padding: 20px 14px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+
+    align-items: stretch;
+  }
+
+  .secondary-button,
+  .primary-button {
+    width: 100%;
+  }
+}
+
+/* =========================================
+   Telas muito pequenas
+   ========================================= */
+
+@media (max-width: 400px) {
+  .page {
+    padding: 14px;
+  }
+
+  .form-panel {
+    padding: 16px;
+  }
+
+  .page-title h1 {
+    font-size: 25px;
+  }
+
+  .form-group input,
+  .form-group select {
+    height: 45px;
+  }
+}
+
