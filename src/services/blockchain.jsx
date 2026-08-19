@@ -27,8 +27,7 @@ export const BOT_NATIVE_SYMBOL =
 // CONTRACT
 // ==========================================================
 
-export const MINERAL_RWA_ADDRESS =
-    import.meta.env.VITE_MINERAL_RWA_ADDRESS;
+export const MINERAL_RWA_ADDRESS =0x68871D10B120388Ddbac919E9D8f9C86c2781c6d
 
 
 // ==========================================================
