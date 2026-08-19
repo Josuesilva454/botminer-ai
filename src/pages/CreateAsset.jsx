@@ -19,78 +19,102 @@ import {
 } from "../services/ipfs";
 
 
-function CreateAsset({ setPage, wallet }) {
+function CreateAsset({
+    setPage,
+    wallet
+}) {
 
-    // ==========================================
+    // ======================================================
     // FORM
-    // ==========================================
+    // ======================================================
 
     const [form, setForm] = useState({
+
         mineralType: "",
+
         weight: "",
+
         purity: "",
+
         origin: "",
+
         estimatedValue: "",
+
         documentHash: ""
     });
 
 
-    // ==========================================
+    // ======================================================
     // FILE
-    // ==========================================
+    // ======================================================
 
-    const [documentFile, setDocumentFile] = useState(null);
-
-
-    // ==========================================
-    // UI STATE
-    // ==========================================
-
-    const [loading, setLoading] = useState(false);
-
-    const [currentStep, setCurrentStep] = useState(0);
-
-    const [status, setStatus] = useState("");
-
-    const [statusType, setStatusType] = useState("info");
+    const [documentFile, setDocumentFile] =
+        useState(null);
 
 
-    // ==========================================
-    // BLOCKCHAIN
-    // ==========================================
+    // ======================================================
+    // UI
+    // ======================================================
+
+    const [loading, setLoading] =
+        useState(false);
+
+
+    const [currentStep, setCurrentStep] =
+        useState(0);
+
+
+    const [status, setStatus] =
+        useState("");
+
+
+    const [statusType, setStatusType] =
+        useState("info");
+
+
+    // ======================================================
+    // WALLET
+    // ======================================================
 
     const [connectedWallet, setConnectedWallet] =
         useState(wallet || "");
 
+
+    // ======================================================
+    // TRANSACTIONS
+    // ======================================================
+
     const [transactionHash, setTransactionHash] =
         useState("");
 
+
     const [verificationHash, setVerificationHash] =
         useState("");
+
 
     const [tokenId, setTokenId] =
         useState("");
 
 
-    // ==========================================
+    // ======================================================
     // AI
-    // ==========================================
+    // ======================================================
 
     const [aiResult, setAiResult] =
         useState(null);
 
 
-    // ==========================================
+    // ======================================================
     // IPFS
-    // ==========================================
+    // ======================================================
 
     const [ipfsCid, setIpfsCid] =
         useState("");
 
 
-    // ==========================================
-    // CHECK CONNECTED WALLET
-    // ==========================================
+    // ======================================================
+    // UPDATE WALLET
+    // ======================================================
 
     useEffect(() => {
 
@@ -101,9 +125,9 @@ function CreateAsset({ setPage, wallet }) {
     }, [wallet]);
 
 
-    // ==========================================
-    // STATUS MESSAGE
-    // ==========================================
+    // ======================================================
+    // STATUS
+    // ======================================================
 
     function showStatus(
         message,
@@ -119,69 +143,58 @@ function CreateAsset({ setPage, wallet }) {
     }
 
 
-    // ==========================================
-    // ERROR MESSAGE
-    // ==========================================
+    // ======================================================
+    // ERROR
+    // ======================================================
 
     function getErrorMessage(error) {
 
         if (!error) {
+
             return "Unknown error.";
         }
 
 
         if (
-            error.code === "ACTION_REJECTED" ||
+            error.code ===
+            "ACTION_REJECTED" ||
             error.code === 4001
         ) {
 
-            return "Transaction rejected in your wallet.";
+            return "Transaction rejected in MetaMask.";
         }
 
 
         if (error.shortMessage) {
+
             return error.shortMessage;
         }
 
 
         if (error.reason) {
+
             return error.reason;
         }
 
 
-        if (error.revert?.args) {
-
-            return (
-                `Smart contract reverted: ` +
-                `${error.revert.args.join(", ")}`
-            );
-        }
-
-
         if (
-            error.data &&
-            typeof error.data === "string" &&
-            error.data !== "0x"
+            error.info?.error?.message
         ) {
 
-            return (
-                `Smart contract error.\n\n` +
-                `Error data: ${error.data}`
-            );
-        }
-
-
-        if (error.info?.error?.message) {
             return error.info.error.message;
         }
 
 
-        if (error.error?.message) {
+        if (
+            error.error?.message
+        ) {
+
             return error.error.message;
         }
 
 
         if (error.message) {
+
             return error.message;
         }
 
@@ -190,9 +203,9 @@ function CreateAsset({ setPage, wallet }) {
     }
 
 
-    // ==========================================
-    // HANDLE INPUT
-    // ==========================================
+    // ======================================================
+    // INPUT
+    // ======================================================
 
     function handleChange(event) {
 
@@ -202,16 +215,21 @@ function CreateAsset({ setPage, wallet }) {
         } = event.target;
 
 
-        setForm((previousForm) => ({
-            ...previousForm,
-            [name]: value
-        }));
+        setForm(
+            previous => ({
+
+                ...previous,
+
+                [name]: value
+
+            })
+        );
     }
 
 
-    // ==========================================
-    // HANDLE FILE
-    // ==========================================
+    // ======================================================
+    // FILE
+    // ======================================================
 
     function handleFileChange(event) {
 
@@ -231,9 +249,9 @@ function CreateAsset({ setPage, wallet }) {
     }
 
 
-    // ==========================================
-    // NORMALIZE TOKEN ID
-    // ==========================================
+    // ======================================================
+    // TOKEN ID
+    // ======================================================
 
     function normalizeTokenId(value) {
 
@@ -247,33 +265,11 @@ function CreateAsset({ setPage, wallet }) {
 
 
         if (
-            typeof value === "bigint"
+            typeof value ===
+            "bigint"
         ) {
 
             return value.toString();
-        }
-
-
-        if (
-            typeof value === "object"
-        ) {
-
-            if (
-                value.tokenId !== undefined
-            ) {
-
-                return normalizeTokenId(
-                    value.tokenId
-                );
-            }
-
-
-            if (
-                value.toString
-            ) {
-
-                return value.toString();
-            }
         }
 
 
@@ -281,18 +277,18 @@ function CreateAsset({ setPage, wallet }) {
     }
 
 
-    // ==========================================
-    // HANDLE SUBMIT
-    // ==========================================
+    // ======================================================
+    // SUBMIT
+    // ======================================================
 
     async function handleSubmit(event) {
 
         event.preventDefault();
 
 
-        // ======================================
-        // WALLET REQUIRED
-        // ======================================
+        // ==================================================
+        // WALLET
+        // ==================================================
 
         if (!connectedWallet) {
 
@@ -306,9 +302,9 @@ function CreateAsset({ setPage, wallet }) {
         }
 
 
-        // ======================================
-        // REQUIRED FIELDS
-        // ======================================
+        // ==================================================
+        // REQUIRED
+        // ==================================================
 
         if (
             !form.mineralType ||
@@ -327,12 +323,13 @@ function CreateAsset({ setPage, wallet }) {
         }
 
 
-        // ======================================
-        // NUMERIC VALIDATION
-        // ======================================
+        // ==================================================
+        // NUMBERS
+        // ==================================================
 
         const weight =
             Number(form.weight);
+
 
         const purity =
             Number(form.purity);
@@ -375,10 +372,6 @@ function CreateAsset({ setPage, wallet }) {
 
             setStatus("");
 
-            setStatusType("info");
-
-            setCurrentStep(0);
-
             setTransactionHash("");
 
             setVerificationHash("");
@@ -390,9 +383,9 @@ function CreateAsset({ setPage, wallet }) {
             setIpfsCid("");
 
 
-            // ==================================
-            // VERIFY WALLET
-            // ==================================
+            // ==================================================
+            // STEP 0
+            // ==================================================
 
             showStatus(
                 "Checking connected wallet...",
@@ -408,7 +401,7 @@ function CreateAsset({ setPage, wallet }) {
             if (!currentWallet) {
 
                 showStatus(
-                    "No wallet is connected. Connect your wallet and try again.",
+                    "No wallet is connected.",
                     "error",
                     0
                 );
@@ -416,33 +409,30 @@ function CreateAsset({ setPage, wallet }) {
                 return;
             }
 
-
-            // ==================================
-            // SECURITY CHECK
-            // ==================================
 
             if (
                 connectedWallet.toLowerCase() !==
                 currentWallet.toLowerCase()
             ) {
 
-                showStatus(
-                    "The connected wallet changed. Please reconnect the wallet.",
-                    "error",
-                    0
-                );
-
                 setConnectedWallet(
                     currentWallet
+                );
+
+
+                showStatus(
+                    "Wallet changed. Please try again.",
+                    "error",
+                    0
                 );
 
                 return;
             }
 
 
-            // ==================================
+            // ==================================================
             // STEP 1 - IPFS
-            // ==================================
+            // ==================================================
 
             showStatus(
                 "Preparing mineral data...",
@@ -501,9 +491,9 @@ function CreateAsset({ setPage, wallet }) {
             }
 
 
-            // ==================================
+            // ==================================================
             // MINERAL DATA
-            // ==================================
+            // ==================================================
 
             const mineralData = {
 
@@ -518,14 +508,17 @@ function CreateAsset({ setPage, wallet }) {
                 estimatedValue:
                     form.estimatedValue || "0",
 
-                documentHash
+                documentHash,
 
+                // IMPORTANTE:
+                // não existe paymentToken
+                // nesta versão.
             };
 
 
-            // ==================================
-            // STEP 2 - BOTMINER AI
-            // ==================================
+            // ==================================================
+            // STEP 2 - AI
+            // ==================================================
 
             showStatus(
                 "Running BOTMiner AI analysis...",
@@ -571,8 +564,10 @@ function CreateAsset({ setPage, wallet }) {
 
 
             if (
-                result.aiScore === undefined ||
-                result.aiScore === null
+                result.aiScore ===
+                undefined ||
+                result.aiScore ===
+                null
             ) {
 
                 showStatus(
@@ -585,17 +580,13 @@ function CreateAsset({ setPage, wallet }) {
             }
 
 
-            setAiResult(
-                result
-            );
+            setAiResult(result);
 
-
-            // ==================================
-            // AI SCORE
-            // ==================================
 
             const aiScore =
-                Number(result.aiScore);
+                Number(
+                    result.aiScore
+                );
 
 
             if (
@@ -605,7 +596,7 @@ function CreateAsset({ setPage, wallet }) {
             ) {
 
                 showStatus(
-                    `Invalid AI score: ${result.aiScore}`,
+                    "Invalid AI score.",
                     "error",
                     2
                 );
@@ -614,9 +605,9 @@ function CreateAsset({ setPage, wallet }) {
             }
 
 
-            // ==========================================
-            // STEP 3 - CREATE NFT
-            // ==========================================
+            // ==================================================
+            // STEP 3 - NFT
+            // ==================================================
 
             showStatus(
                 "Creating mineral NFT on BOT Chain...",
@@ -650,7 +641,7 @@ function CreateAsset({ setPage, wallet }) {
             if (!creationResult) {
 
                 showStatus(
-                    "The blockchain did not return a creation result.",
+                    "Blockchain did not return a creation result.",
                     "error",
                     3
                 );
@@ -659,9 +650,9 @@ function CreateAsset({ setPage, wallet }) {
             }
 
 
-            // ==================================
-            // TRANSACTION HASH
-            // ==================================
+            // ==================================================
+            // TRANSACTION
+            // ==================================================
 
             const creationHash =
                 creationResult.hash ||
@@ -669,17 +660,14 @@ function CreateAsset({ setPage, wallet }) {
                 "";
 
 
-            if (creationHash) {
-
-                setTransactionHash(
-                    creationHash
-                );
-            }
+            setTransactionHash(
+                creationHash
+            );
 
 
-            // ==================================
+            // ==================================================
             // TOKEN ID
-            // ==================================
+            // ==================================================
 
             const createdTokenId =
                 normalizeTokenId(
@@ -687,14 +675,10 @@ function CreateAsset({ setPage, wallet }) {
                 );
 
 
-            if (
-                !createdTokenId ||
-                createdTokenId === "undefined" ||
-                createdTokenId === "null"
-            ) {
+            if (!createdTokenId) {
 
                 showStatus(
-                    "NFT was created, but the Token ID was not returned.",
+                    "NFT created, but Token ID was not returned.",
                     "error",
                     3
                 );
@@ -708,9 +692,9 @@ function CreateAsset({ setPage, wallet }) {
             );
 
 
-            // ==========================================
-            // STEP 4 - CONTRACT OWNER
-            // ==========================================
+            // ==================================================
+            // STEP 4
+            // ==================================================
 
             showStatus(
                 "Checking MineralRWA contract...",
@@ -725,13 +709,11 @@ function CreateAsset({ setPage, wallet }) {
 
             } catch {
 
-                // Informational check only.
+                console.warn(
+                    "Could not read contract owner."
+                );
             }
 
-
-            // ==========================================
-            // TOKEN OWNER
-            // ==========================================
 
             try {
 
@@ -741,13 +723,15 @@ function CreateAsset({ setPage, wallet }) {
 
             } catch {
 
-                // Informational check only.
+                console.warn(
+                    "Could not read NFT owner."
+                );
             }
 
 
-            // ==========================================
-            // STEP 5 - VERIFY AI
-            // ==========================================
+            // ==================================================
+            // STEP 5 - VERIFY
+            // ==================================================
 
             showStatus(
                 "Registering BOTMiner AI verification on-chain...",
@@ -763,11 +747,8 @@ function CreateAsset({ setPage, wallet }) {
 
                 verificationResult =
                     await verifyMineral(
-
                         createdTokenId,
-
                         aiScore
-
                     );
 
             } catch (error) {
@@ -782,27 +763,20 @@ function CreateAsset({ setPage, wallet }) {
             }
 
 
-            // ==================================
-            // VERIFICATION HASH
-            // ==================================
-
             const verificationTxHash =
                 verificationResult?.hash ||
                 verificationResult?.transactionHash ||
                 "";
 
 
-            if (verificationTxHash) {
-
-                setVerificationHash(
-                    verificationTxHash
-                );
-            }
+            setVerificationHash(
+                verificationTxHash
+            );
 
 
-            // ==========================================
+            // ==================================================
             // STEP 6 - SAVE
-            // ==========================================
+            // ==================================================
 
             showStatus(
                 "Saving tokenized mineral...",
@@ -849,17 +823,19 @@ function CreateAsset({ setPage, wallet }) {
                 ipfsCid:
                     mineralData.documentHash,
 
-                aiScore:
-                    aiScore,
+                aiScore,
 
                 riskLevel:
-                    result.riskLevel || "UNKNOWN",
+                    result.riskLevel ||
+                    "UNKNOWN",
 
                 aiRecommendation:
-                    result.recommendation || "",
+                    result.recommendation ||
+                    "",
 
                 aiAnalysis:
-                    result.analysis || "",
+                    result.analysis ||
+                    "",
 
                 status:
                     "VERIFIED_ON_CHAIN",
@@ -875,7 +851,6 @@ function CreateAsset({ setPage, wallet }) {
 
                 createdAt:
                     new Date().toISOString()
-
             };
 
 
@@ -885,20 +860,23 @@ function CreateAsset({ setPage, wallet }) {
             );
 
 
-            // ==========================================
+            // ==================================================
             // SUCCESS
-            // ==========================================
+            // ==================================================
 
             showStatus(
-                `✓ Mineral successfully tokenized and verified! Token ID: #${createdTokenId} | AI Score: ${aiScore}/100`,
+
+                `✓ Mineral successfully tokenized and verified!\n\nToken ID: #${createdTokenId}\nAI Score: ${aiScore}/100\n\nNo platform fee was charged.`,
+
                 "success",
+
                 7
             );
 
 
-            // ==========================================
+            // ==================================================
             // OPEN ASSET
-            // ==========================================
+            // ==================================================
 
             setTimeout(() => {
 
@@ -924,18 +902,13 @@ function CreateAsset({ setPage, wallet }) {
     }
 
 
-    // ==========================================
+    // ======================================================
     // UI
-    // ==========================================
+    // ======================================================
 
     return (
 
         <div className="page">
-
-
-            {/* ==================================
-                TITLE
-            ================================== */}
 
             <div className="page-title">
 
@@ -955,9 +928,9 @@ function CreateAsset({ setPage, wallet }) {
             </div>
 
 
-            {/* ==================================
+            {/* ==================================================
                 WALLET
-            ================================== */}
+            ================================================== */}
 
             {connectedWallet ? (
 
@@ -991,9 +964,9 @@ function CreateAsset({ setPage, wallet }) {
             )}
 
 
-            {/* ==================================
+            {/* ==================================================
                 STATUS
-            ================================== */}
+            ================================================== */}
 
             {status && (
 
@@ -1011,9 +984,9 @@ function CreateAsset({ setPage, wallet }) {
             )}
 
 
-            {/* ==================================
+            {/* ==================================================
                 FORM
-            ================================== */}
+            ================================================== */}
 
             <section className="form-panel">
 
@@ -1173,7 +1146,7 @@ function CreateAsset({ setPage, wallet }) {
                         </div>
 
 
-                        {/* DOCUMENT CID */}
+                        {/* IPFS */}
 
                         <div className="form-group">
 
@@ -1198,9 +1171,9 @@ function CreateAsset({ setPage, wallet }) {
                     </div>
 
 
-                    {/* ==================================
+                    {/* ==================================================
                         DOCUMENT
-                    ================================== */}
+                    ================================================== */}
 
                     <div className="upload">
 
@@ -1257,9 +1230,9 @@ function CreateAsset({ setPage, wallet }) {
                     </div>
 
 
-                    {/* ==================================
+                    {/* ==================================================
                         AI
-                    ================================== */}
+                    ================================================== */}
 
                     {aiResult && (
 
@@ -1310,9 +1283,9 @@ function CreateAsset({ setPage, wallet }) {
                     )}
 
 
-                    {/* ==================================
-                        TOKEN
-                    ================================== */}
+                    {/* ==================================================
+                        NFT
+                    ================================================== */}
 
                     {tokenId && (
 
@@ -1335,9 +1308,9 @@ function CreateAsset({ setPage, wallet }) {
                     )}
 
 
-                    {/* ==================================
-                        CREATION TX
-                    ================================== */}
+                    {/* ==================================================
+                        TX
+                    ================================================== */}
 
                     {transactionHash && (
 
@@ -1356,9 +1329,9 @@ function CreateAsset({ setPage, wallet }) {
                     )}
 
 
-                    {/* ==================================
-                        VERIFICATION TX
-                    ================================== */}
+                    {/* ==================================================
+                        VERIFY TX
+                    ================================================== */}
 
                     {verificationHash && (
 
@@ -1377,9 +1350,9 @@ function CreateAsset({ setPage, wallet }) {
                     )}
 
 
-                    {/* ==================================
+                    {/* ==================================================
                         ACTIONS
-                    ================================== */}
+                    ================================================== */}
 
                     <div className="actions">
 
@@ -1407,10 +1380,15 @@ function CreateAsset({ setPage, wallet }) {
                         >
 
                             {loading
+
                                 ? "Processing..."
+
                                 : connectedWallet
+
                                     ? "Tokenize on BOT Chain"
+
                                     : "Connect Wallet First"
+
                             }
 
                         </button>

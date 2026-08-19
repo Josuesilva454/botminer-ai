@@ -1,50 +1,88 @@
 import { ethers } from "ethers";
 
 
-// ==========================================
+// ==========================================================
+// BOT CHAIN TESTNET
+// ==========================================================
+
+export const BOT_CHAIN_ID = 968;
+
+export const BOT_CHAIN_ID_HEX = "0x3c8";
+
+export const BOT_CHAIN_NAME =
+    "BOT Chain Testnet";
+
+export const BOT_RPC_URL =
+    import.meta.env.VITE_RPC_URL ||
+    "https://rpc.bohr.life";
+
+export const BOT_EXPLORER =
+    "https://scan.bohr.life/";
+
+export const BOT_NATIVE_SYMBOL =
+    "BOT";
+
+
+// ==========================================================
 // CONTRACT
-// ==========================================
+// ==========================================================
 
 export const MINERAL_RWA_ADDRESS =
     import.meta.env.VITE_MINERAL_RWA_ADDRESS;
 
 
+// ==========================================================
+// ABI
+// ==========================================================
+
 export const MINERAL_RWA_ABI = [
 
-    // ======================================
-    // WRITE FUNCTIONS
-    // ======================================
+    // ======================================================
+    // CREATE
+    // ======================================================
 
-    "function createMineral(string mineralType, uint256 weight, uint256 purity, string origin, uint256 estimatedValue, string documentHash) returns (uint256)",
+    "function createMineral(string mineralType, uint256 weight, uint256 purity, string origin, uint256 estimatedValue, string documentHash, string uri) returns (uint256)",
+
+
+    // ======================================================
+    // VERIFY
+    // ======================================================
 
     "function verifyMineral(uint256 tokenId, uint256 aiScore)",
 
 
-    // ======================================
-    // READ FUNCTIONS
-    // ======================================
+    // ======================================================
+    // READ
+    // ======================================================
 
     "function getMineral(uint256 tokenId) view returns (tuple(string mineralType, uint256 weight, uint256 purity, string origin, uint256 estimatedValue, string documentHash, uint256 aiScore, bool verified, uint256 createdAt))",
 
-    "function getMineralOwner(uint256 tokenId) view returns (address)",
+    "function ownerOf(uint256 tokenId) view returns (address)",
+
+    "function tokenURI(uint256 tokenId) view returns (string)",
 
     "function owner() view returns (address)",
 
+    "function name() view returns (string)",
 
-    // ======================================
+    "function symbol() view returns (string)",
+
+    "function balanceOf(address owner) view returns (uint256)",
+
+
+    // ======================================================
     // EVENTS
-    // ======================================
+    // ======================================================
 
-    "event MineralCreated(uint256 indexed tokenId, address indexed owner, string mineralType, uint256 weight)",
+    "event MineralCreated(address indexed user, uint256 indexed tokenId)",
 
     "event MineralVerified(uint256 indexed tokenId, uint256 aiScore)"
-
 ];
 
 
-// ==========================================
-// CHECK CONTRACT ADDRESS
-// ==========================================
+// ==========================================================
+// VALIDATE CONTRACT ADDRESS
+// ==========================================================
 
 if (!MINERAL_RWA_ADDRESS) {
 
@@ -55,31 +93,187 @@ if (!MINERAL_RWA_ADDRESS) {
 }
 
 
-// ==========================================
-// PROVIDER
-// ==========================================
+// ==========================================================
+// DIRECT RPC PROVIDER
+// ==========================================================
+
+export const directProvider =
+    new ethers.JsonRpcProvider(
+        BOT_RPC_URL,
+        BOT_CHAIN_ID
+    );
+
+
+// ==========================================================
+// CHECK CONTRACT ADDRESS
+// ==========================================================
+
+function checkContractAddress() {
+
+    if (!MINERAL_RWA_ADDRESS) {
+
+        throw new Error(
+            "VITE_MINERAL_RWA_ADDRESS não configurado."
+        );
+    }
+
+    if (
+        !ethers.isAddress(
+            MINERAL_RWA_ADDRESS
+        )
+    ) {
+
+        throw new Error(
+            "VITE_MINERAL_RWA_ADDRESS não é um endereço Ethereum válido."
+        );
+    }
+}
+
+
+// ==========================================================
+// SWITCH METAMASK TO BOT CHAIN
+// ==========================================================
+
+async function switchToBOTChain() {
+
+    if (!window.ethereum) {
+
+        throw new Error(
+            "MetaMask não encontrada."
+        );
+    }
+
+
+    // ======================================================
+    // TENTA TROCAR PARA A REDE
+    // ======================================================
+
+    try {
+
+        await window.ethereum.request({
+
+            method: "wallet_switchEthereumChain",
+
+            params: [
+                {
+                    chainId: BOT_CHAIN_ID_HEX
+                }
+            ]
+
+        });
+
+    } catch (error) {
+
+        // ==================================================
+        // REDE NÃO EXISTE NA METAMASK
+        // ==================================================
+
+        if (
+            error.code === 4902 ||
+            error.code === -32603
+        ) {
+
+            await window.ethereum.request({
+
+                method:
+                    "wallet_addEthereumChain",
+
+                params: [
+
+                    {
+
+                        chainId:
+                            BOT_CHAIN_ID_HEX,
+
+                        chainName:
+                            BOT_CHAIN_NAME,
+
+                        nativeCurrency: {
+
+                            name:
+                                BOT_NATIVE_SYMBOL,
+
+                            symbol:
+                                BOT_NATIVE_SYMBOL,
+
+                            decimals: 18
+
+                        },
+
+                        rpcUrls: [
+
+                            BOT_RPC_URL
+
+                        ],
+
+                        blockExplorerUrls: [
+
+                            BOT_EXPLORER
+
+                        ]
+
+                    }
+
+                ]
+
+            });
+
+        } else {
+
+            throw error;
+        }
+    }
+
+
+    // ======================================================
+    // CONFIRMA CHAIN ID
+    // ======================================================
+
+    const chainId =
+        await window.ethereum.request({
+
+            method:
+                "eth_chainId"
+
+        });
+
+
+    if (
+        chainId.toLowerCase() !==
+        BOT_CHAIN_ID_HEX.toLowerCase()
+    ) {
+
+        throw new Error(
+            "MetaMask não está conectada à BOT Chain Testnet."
+        );
+    }
+
+}
+
+
+// ==========================================================
+// METAMASK PROVIDER
+// ==========================================================
 
 async function getProvider() {
 
     if (!window.ethereum) {
 
         throw new Error(
-            "MetaMask is not installed."
+            "MetaMask não encontrada."
         );
-
     }
 
 
     return new ethers.BrowserProvider(
         window.ethereum
     );
-
 }
 
 
-// ==========================================
+// ==========================================================
 // SIGNER
-// ==========================================
+// ==========================================================
 
 async function getSigner() {
 
@@ -87,7 +281,16 @@ async function getSigner() {
         await getProvider();
 
 
-    // Solicita acesso à carteira
+    // ======================================================
+    // GARANTE BOT CHAIN
+    // ======================================================
+
+    await switchToBOTChain();
+
+
+    // ======================================================
+    // REQUEST ACCOUNT
+    // ======================================================
 
     await provider.send(
         "eth_requestAccounts",
@@ -95,42 +298,36 @@ async function getSigner() {
     );
 
 
-    const signer =
-        await provider.getSigner();
-
-
-    const address =
-        await signer.getAddress();
-
-
-    console.log(
-        "Signer conectado:",
-        address
-    );
-
-
-    return signer;
-
+    return await provider.getSigner();
 }
 
 
-// ==========================================
-// CONTRACT WITH SIGNER
-// ==========================================
+// ==========================================================
+// WRITE CONTRACT
+// ==========================================================
 
 async function getContract() {
 
-    if (!MINERAL_RWA_ADDRESS) {
-
-        throw new Error(
-            "Mineral RWA contract address is not configured."
-        );
-
-    }
+    checkContractAddress();
 
 
     const signer =
         await getSigner();
+
+
+    const network =
+        await signer.provider.getNetwork();
+
+
+    if (
+        network.chainId !==
+        BigInt(BOT_CHAIN_ID)
+    ) {
+
+        throw new Error(
+            `Rede incorreta. Chain atual: ${network.chainId}. Esperado: ${BOT_CHAIN_ID}.`
+        );
+    }
 
 
     return new ethers.Contract(
@@ -142,29 +339,16 @@ async function getContract() {
         signer
 
     );
-
 }
 
 
-// ==========================================
-// CONTRACT WITH PROVIDER
-// ==========================================
-// Used only for read operations.
-// ==========================================
+// ==========================================================
+// READ CONTRACT
+// ==========================================================
 
 async function getReadContract() {
 
-    if (!MINERAL_RWA_ADDRESS) {
-
-        throw new Error(
-            "Mineral RWA contract address is not configured."
-        );
-
-    }
-
-
-    const provider =
-        await getProvider();
+    checkContractAddress();
 
 
     return new ethers.Contract(
@@ -173,41 +357,83 @@ async function getReadContract() {
 
         MINERAL_RWA_ABI,
 
-        provider
+        directProvider
 
     );
-
 }
 
 
-// ==========================================
-// GET CONNECTED WALLET
-// ==========================================
+// ==========================================================
+// CONNECTED WALLET
+// ==========================================================
 
 export async function getConnectedWallet() {
 
-    const signer =
-        await getSigner();
+    try {
+
+        if (!window.ethereum) {
+
+            return "";
+        }
 
 
-    const address =
-        await signer.getAddress();
+        const provider =
+            await getProvider();
 
 
-    console.log(
-        "Connected wallet:",
-        address
-    );
+        const accounts =
+            await provider.send(
+                "eth_accounts",
+                []
+            );
 
 
-    return address;
+        if (
+            !accounts ||
+            accounts.length === 0
+        ) {
+
+            return "";
+        }
+
+
+        return accounts[0];
+
+    } catch {
+
+        return "";
+
+    }
 
 }
 
 
-// ==========================================
-// GET CONTRACT OWNER
-// ==========================================
+// ==========================================================
+// NETWORK
+// ==========================================================
+
+export async function getCurrentNetwork() {
+
+    if (!window.ethereum) {
+
+        throw new Error(
+            "MetaMask não encontrada."
+        );
+    }
+
+
+    const provider =
+        await getProvider();
+
+
+    return await provider.getNetwork();
+
+}
+
+
+// ==========================================================
+// CONTRACT OWNER
+// ==========================================================
 
 export async function getContractOwner() {
 
@@ -215,66 +441,42 @@ export async function getContractOwner() {
         await getReadContract();
 
 
-    const owner =
-        await contract.owner();
-
-
-    console.log(
-        "MineralRWA contract owner:",
-        owner
-    );
-
-
-    return owner;
+    return await contract.owner();
 
 }
 
 
-// ==========================================
-// CHECK IF CONNECTED WALLET IS OWNER
-// ==========================================
+// ==========================================================
+// IS CONTRACT OWNER
+// ==========================================================
 
 export async function isContractOwner() {
 
-    const connectedWallet =
+    const wallet =
         await getConnectedWallet();
 
 
-    const contractOwner =
+    if (!wallet) {
+
+        return false;
+    }
+
+
+    const owner =
         await getContractOwner();
 
 
-    const isOwner =
-        connectedWallet.toLowerCase() ===
-        contractOwner.toLowerCase();
-
-
-    console.log(
-        "Connected wallet:",
-        connectedWallet
+    return (
+        wallet.toLowerCase() ===
+        owner.toLowerCase()
     );
-
-
-    console.log(
-        "Contract owner:",
-        contractOwner
-    );
-
-
-    console.log(
-        "Is contract owner:",
-        isOwner
-    );
-
-
-    return isOwner;
 
 }
 
 
-// ==========================================
-// GET MINERAL OWNER
-// ==========================================
+// ==========================================================
+// MINERAL OWNER
+// ==========================================================
 
 export async function getMineralOwner(
     tokenId
@@ -284,26 +486,45 @@ export async function getMineralOwner(
         await getReadContract();
 
 
-    const owner =
-        await contract.getMineralOwner(
+    try {
+
+        return await contract.ownerOf(
             tokenId
         );
 
+    } catch (error) {
 
-    console.log(
-        `Owner of token #${tokenId}:`,
-        owner
-    );
+        throw new Error(
+            getBlockchainError(error)
+        );
 
-
-    return owner;
+    }
 
 }
 
 
-// ==========================================
+// ==========================================================
+// TOKEN URI
+// ==========================================================
+
+export async function getMineralURI(
+    tokenId
+) {
+
+    const contract =
+        await getReadContract();
+
+
+    return await contract.tokenURI(
+        tokenId
+    );
+
+}
+
+
+// ==========================================================
 // GET MINERAL
-// ==========================================
+// ==========================================================
 
 export async function getMineral(
     tokenId
@@ -313,26 +534,16 @@ export async function getMineral(
         await getReadContract();
 
 
-    const mineral =
-        await contract.getMineral(
-            tokenId
-        );
-
-
-    console.log(
-        `Mineral #${tokenId}:`,
-        mineral
+    return await contract.getMineral(
+        tokenId
     );
-
-
-    return mineral;
 
 }
 
 
-// ==========================================
+// ==========================================================
 // CREATE MINERAL
-// ==========================================
+// ==========================================================
 
 export async function createMineral(
     mineral
@@ -342,9 +553,9 @@ export async function createMineral(
         await getContract();
 
 
-    // ======================================
+    // ======================================================
     // DATA
-    // ======================================
+    // ======================================================
 
     const mineralType =
         mineral.mineralType ||
@@ -372,29 +583,46 @@ export async function createMineral(
         );
 
 
-    // ======================================
+    const origin =
+        mineral.origin ||
+        "";
+
+
+    const documentHash =
+        mineral.documentHash ||
+        "";
+
+
+    const uri =
+        mineral.uri ||
+        "";
+
+
+    // ======================================================
     // VALIDATION
-    // ======================================
+    // ======================================================
 
     if (!mineralType) {
 
         throw new Error(
             "Mineral type is required."
         );
-
-    }
-
-
-    if (weightTons <= 0) {
-
-        throw new Error(
-            "Weight must be greater than zero."
-        );
-
     }
 
 
     if (
+        !Number.isFinite(weightTons) ||
+        weightTons <= 0
+    ) {
+
+        throw new Error(
+            "Weight must be greater than zero."
+        );
+    }
+
+
+    if (
+        !Number.isFinite(purityPercent) ||
         purityPercent < 0 ||
         purityPercent > 100
     ) {
@@ -402,134 +630,121 @@ export async function createMineral(
         throw new Error(
             "Purity must be between 0 and 100."
         );
-
     }
 
 
-    // ======================================
+    if (
+        !Number.isFinite(estimatedValue) ||
+        estimatedValue < 0
+    ) {
+
+        throw new Error(
+            "Estimated value is invalid."
+        );
+    }
+
+
+    // ======================================================
     // CONTRACT SCALE
-    // ======================================
-    //
-    // Example:
-    //
-    // 500.500 tons
-    //       ↓
-    // 500500 kg
-    //
-    // 67.50%
-    //       ↓
-    // 6750
-    //
-    // ======================================
+    // ======================================================
 
     const weight =
-        Math.round(
-            weightTons * 1000
+        BigInt(
+            Math.round(
+                weightTons * 1000
+            )
         );
 
 
     const purity =
-        Math.round(
-            purityPercent * 100
+        BigInt(
+            Math.round(
+                purityPercent * 100
+            )
         );
 
 
-    console.log(
-        "=================================="
-    );
-
-
-    console.log(
-        "Creating mineral..."
-    );
-
-
-    console.log(
-        "Mineral type:",
-        mineralType
-    );
-
-
-    console.log(
-        "Weight:",
-        weight
-    );
-
-
-    console.log(
-        "Purity:",
-        purity
-    );
-
-
-    console.log(
-        "Origin:",
-        mineral.origin || ""
-    );
-
-
-    console.log(
-        "Estimated value:",
-        estimatedValue
-    );
-
-
-    console.log(
-        "Document hash:",
-        mineral.documentHash || ""
-    );
-
-
-    console.log(
-        "=================================="
-    );
-
-
-    // ======================================
-    // CREATE TRANSACTION
-    // ======================================
-
-    const tx =
-        await contract.createMineral(
-
-            mineralType,
-
-            weight,
-
-            purity,
-
-            mineral.origin || "",
-
-            estimatedValue,
-
-            mineral.documentHash || ""
-
+    const value =
+        BigInt(
+            Math.round(
+                estimatedValue
+            )
         );
 
 
-    console.log(
-        "Mineral transaction:",
-        tx.hash
-    );
+    // ======================================================
+    // CREATE
+    // ======================================================
+
+    let tx;
 
 
-    // ======================================
-    // WAIT CONFIRMATION
-    // ======================================
+    try {
 
-    const receipt =
-        await tx.wait();
+        tx =
+            await contract.createMineral(
+
+                mineralType,
+
+                weight,
+
+                purity,
+
+                origin,
+
+                value,
+
+                documentHash,
+
+                uri
+
+            );
+
+    } catch (error) {
+
+        console.error(
+            "createMineral transaction failed:",
+            error
+        );
 
 
-    console.log(
-        "Transaction confirmed:",
-        receipt.hash
-    );
+        throw new Error(
+            getBlockchainError(error)
+        );
+
+    }
 
 
-    // ======================================
-    // FIND MineralCreated EVENT
-    // ======================================
+    // ======================================================
+    // WAIT
+    // ======================================================
+
+    let receipt;
+
+
+    try {
+
+        receipt =
+            await tx.wait();
+
+    } catch (error) {
+
+        console.error(
+            "Transaction confirmation failed:",
+            error
+        );
+
+
+        throw new Error(
+            getBlockchainError(error)
+        );
+
+    }
+
+
+    // ======================================================
+    // TOKEN ID
+    // ======================================================
 
     let tokenId = null;
 
@@ -549,23 +764,11 @@ export async function createMineral(
             if (
                 parsed &&
                 parsed.name ===
-                "MineralCreated"
+                    "MineralCreated"
             ) {
 
                 tokenId =
                     parsed.args.tokenId.toString();
-
-
-                console.log(
-                    "MineralCreated event found."
-                );
-
-
-                console.log(
-                    "Token ID:",
-                    tokenId
-                );
-
 
                 break;
 
@@ -573,22 +776,17 @@ export async function createMineral(
 
         } catch {
 
-            // Ignore logs
-            // from other contracts.
+            // outro evento
 
         }
 
     }
 
 
-    // ======================================
-    // VALIDATE TOKEN ID
-    // ======================================
-
     if (!tokenId) {
 
         throw new Error(
-            "Mineral was created, but token ID could not be detected."
+            "NFT criado, mas o Token ID não foi encontrado no evento."
         );
 
     }
@@ -597,6 +795,9 @@ export async function createMineral(
     return {
 
         hash:
+            receipt.hash,
+
+        transactionHash:
             receipt.hash,
 
         tokenId,
@@ -608,69 +809,41 @@ export async function createMineral(
 }
 
 
-// ==========================================
+// ==========================================================
 // VERIFY MINERAL
-// ==========================================
+// ==========================================================
 
 export async function verifyMineral(
     tokenId,
     aiScore
 ) {
 
-    console.log(
-        "=================================="
-    );
-
-
-    console.log(
-        "STEP 2 - VERIFY MINERAL"
-    );
-
-
-    console.log(
-        "=================================="
-    );
-
-
-    // ======================================
-    // GET CONTRACT
-    // ======================================
-
     const contract =
         await getContract();
 
 
-    // ======================================
-    // NORMALIZE VALUES
-    // ======================================
+    const readContract =
+        await getReadContract();
+
 
     const token =
-        Number(tokenId);
+        BigInt(tokenId);
 
 
     const score =
-        Number(aiScore);
+        BigInt(
+            Math.round(
+                Number(aiScore)
+            )
+        );
 
 
-    console.log(
-        "Token ID:",
-        token
-    );
-
-
-    console.log(
-        "AI Score:",
-        score
-    );
-
-
-    // ======================================
-    // VALIDATE TOKEN ID
-    // ======================================
+    // ======================================================
+    // VALIDATION
+    // ======================================================
 
     if (
-        !Number.isInteger(token) ||
-        token <= 0
+        token <= 0n
     ) {
 
         throw new Error(
@@ -680,14 +853,9 @@ export async function verifyMineral(
     }
 
 
-    // ======================================
-    // VALIDATE AI SCORE
-    // ======================================
-
     if (
-        !Number.isFinite(score) ||
-        score < 0 ||
-        score > 100
+        score < 0n ||
+        score > 100n
     ) {
 
         throw new Error(
@@ -697,9 +865,9 @@ export async function verifyMineral(
     }
 
 
-    // ======================================
-    // GET SIGNER
-    // ======================================
+    // ======================================================
+    // CHECK CONTRACT OWNER
+    // ======================================================
 
     const signer =
         contract.runner;
@@ -714,135 +882,62 @@ export async function verifyMineral(
     }
 
 
-    // ======================================
-    // GET CONNECTED WALLET
-    // ======================================
-
     const connectedWallet =
         await signer.getAddress();
 
 
-    console.log(
-        "Connected wallet:",
-        connectedWallet
-    );
-
-
-    // ======================================
-    // GET CONTRACT OWNER
-    // ======================================
-
     const contractOwner =
-        await contract.owner();
-
-
-    console.log(
-        "Contract owner:",
-        contractOwner
-    );
-
-
-    // ======================================
-    // OWNER VALIDATION
-    // ======================================
-
-    const connected =
-        connectedWallet.toLowerCase();
-
-
-    const owner =
-        contractOwner.toLowerCase();
-
-
-    console.log(
-        "Wallet comparison:"
-    );
-
-
-    console.log(
-        "Connected:",
-        connected
-    );
-
-
-    console.log(
-        "Owner:",
-        owner
-    );
+        await readContract.owner();
 
 
     if (
-        connected !== owner
+        connectedWallet.toLowerCase() !==
+        contractOwner.toLowerCase()
     ) {
 
         throw new Error(
 
-            "The connected wallet is not the owner of the MineralRWA contract.\n\n" +
+            "A carteira conectada não é a owner do contrato MineralRWA.\n\n" +
 
-            `Connected wallet:\n${connectedWallet}\n\n` +
+            `Carteira conectada:\n${connectedWallet}\n\n` +
 
-            `Contract owner:\n${contractOwner}\n\n` +
-
-            "Connect the wallet that deployed the contract or transfer contract ownership."
+            `Owner do contrato:\n${contractOwner}`
 
         );
 
     }
 
 
-    console.log(
-        "Owner validation: PASSED"
-    );
-
-
-    // ======================================
-    // CHECK MINERAL
-    // ======================================
+    // ======================================================
+    // CHECK TOKEN
+    // ======================================================
 
     try {
 
-        const mineral =
-            await contract.getMineral(
-                token
-            );
-
-
-        console.log(
-            "Mineral found:",
-            mineral
+        await readContract.getMineral(
+            token
         );
-
 
     } catch (error) {
 
-        console.error(
-            "Could not read mineral:",
-            error
-        );
-
-
         throw new Error(
-
-            `Mineral #${token} does not exist or could not be read.`
-
+            getBlockchainError(error)
         );
 
     }
 
 
-    // ======================================
-    // ESTIMATE GAS
-    // ======================================
+    // ======================================================
+    // SEND
+    // ======================================================
+
+    let tx;
+
 
     try {
 
-        console.log(
-            "Estimating verification gas..."
-        );
-
-
-        const gas =
-            await contract.verifyMineral.estimateGas(
+        tx =
+            await contract.verifyMineral(
 
                 token,
 
@@ -850,96 +945,27 @@ export async function verifyMineral(
 
             );
 
-
-        console.log(
-            "Estimated gas:",
-            gas.toString()
-        );
-
-
     } catch (error) {
 
         console.error(
-            "Verification gas estimation failed:",
+            "verifyMineral transaction failed:",
             error
         );
 
 
-        console.error(
-            "Error code:",
-            error?.code
+        throw new Error(
+            getBlockchainError(error)
         );
-
-
-        console.error(
-            "Error data:",
-            error?.data
-        );
-
-
-        console.error(
-            "Error reason:",
-            error?.reason
-        );
-
-
-        throw error;
 
     }
 
 
-    // ======================================
-    // SEND TRANSACTION
-    // ======================================
-
-    console.log(
-        "Sending verification transaction..."
-    );
-
-
-    const tx =
-        await contract.verifyMineral(
-
-            token,
-
-            score
-
-        );
-
-
-    console.log(
-        "Verification transaction:",
-        tx.hash
-    );
-
-
-    // ======================================
-    // WAIT CONFIRMATION
-    // ======================================
+    // ======================================================
+    // WAIT
+    // ======================================================
 
     const receipt =
         await tx.wait();
-
-
-    console.log(
-        "Verification confirmed:",
-        receipt.hash
-    );
-
-
-    console.log(
-        "=================================="
-    );
-
-
-    console.log(
-        "MINERAL VERIFIED SUCCESSFULLY"
-    );
-
-
-    console.log(
-        "=================================="
-    );
 
 
     return {
@@ -947,8 +973,156 @@ export async function verifyMineral(
         hash:
             receipt.hash,
 
+        transactionHash:
+            receipt.hash,
+
         receipt
 
     };
+
+}
+
+
+// ==========================================================
+// CONTRACT NAME
+// ==========================================================
+
+export async function getContractName() {
+
+    const contract =
+        await getReadContract();
+
+
+    return await contract.name();
+
+}
+
+
+// ==========================================================
+// CONTRACT SYMBOL
+// ==========================================================
+
+export async function getContractSymbol() {
+
+    const contract =
+        await getReadContract();
+
+
+    return await contract.symbol();
+
+}
+
+
+// ==========================================================
+// NFT BALANCE
+// ==========================================================
+
+export async function getNFTBalance(
+    address
+) {
+
+    const contract =
+        await getReadContract();
+
+
+    return await contract.balanceOf(
+        address
+    );
+
+}
+
+
+// ==========================================================
+// BLOCKCHAIN ERROR
+// ==========================================================
+
+function getBlockchainError(
+    error
+) {
+
+    if (!error) {
+
+        return "Unknown blockchain error.";
+
+    }
+
+
+    if (
+        error.code ===
+            "ACTION_REJECTED" ||
+        error.code === 4001
+    ) {
+
+        return (
+            "Transação rejeitada na MetaMask."
+        );
+
+    }
+
+
+    if (
+        error.code ===
+        "CALL_EXCEPTION"
+    ) {
+
+        return (
+            "O contrato rejeitou a operação. " +
+            "Verifique se o endereço do contrato e o Token ID pertencem à BOT Chain Testnet."
+        );
+
+    }
+
+
+    if (error.shortMessage) {
+
+        return error.shortMessage;
+
+    }
+
+
+    if (error.reason) {
+
+        return error.reason;
+
+    }
+
+
+    if (
+        error.info?.error?.message
+    ) {
+
+        return error.info.error.message;
+
+    }
+
+
+    if (
+        error.error?.message
+    ) {
+
+        return error.error.message;
+
+    }
+
+
+    if (
+        error.data?.message
+    ) {
+
+        return error.data.message;
+
+    }
+
+
+    if (error.message) {
+
+        return error.message;
+
+    }
+
+
+    return (
+        "Blockchain transaction failed."
+    );
 
 }

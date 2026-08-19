@@ -6,13 +6,51 @@ import Asset from "./pages/Asset";
 
 import "./index.css";
 
+
+// ==========================================
+// NETWORK CONFIGURATION
+// ==========================================
+
+const NETWORKS = {
+    // Hardhat Local
+    "0x7a69": {
+        name: "Hardhat Local",
+        status: "Local Testnet"
+    },
+
+    // BOT Chain Testnet
+    "0x3c8": {
+        name: "BOT Chain Testnet",
+        status: "Testnet"
+    }
+};
+
+
+// ==========================================
+// APP
+// ==========================================
+
 function App() {
+
     const [page, setPage] = useState("dashboard");
+
     const [wallet, setWallet] = useState("");
+
     const [network, setNetwork] = useState("");
+
     const [connecting, setConnecting] = useState(false);
 
-    // Controla se o usuário realmente clicou em Connect Wallet
+    const [networkName, setNetworkName] =
+        useState("Unknown Network");
+
+    const [networkStatus, setNetworkStatus] =
+        useState("");
+
+
+    // ==========================================
+    // CONTROL WALLET CONNECTION
+    // ==========================================
+
     const walletConnectedRef = useRef(false);
 
 
@@ -21,6 +59,7 @@ function App() {
     // ==========================================
 
     function formatWallet(address) {
+
         if (!address) {
             return "";
         }
@@ -30,11 +69,43 @@ function App() {
 
 
     // ==========================================
+    // DETECT NETWORK
+    // ==========================================
+
+    function updateNetwork(chainId) {
+
+        setNetwork(chainId);
+
+        const networkInfo = NETWORKS[chainId];
+
+        if (networkInfo) {
+
+            setNetworkName(networkInfo.name);
+
+            setNetworkStatus(networkInfo.status);
+
+        } else {
+
+            setNetworkName("Unknown Network");
+
+            setNetworkStatus("Unsupported Network");
+        }
+
+        console.log(
+            "Chain ID:",
+            chainId
+        );
+    }
+
+
+    // ==========================================
     // CONNECT WALLET
     // ==========================================
 
     async function connectWallet() {
+
         if (!window.ethereum) {
+
             alert(
                 "MetaMask não encontrada. Instale a extensão MetaMask para continuar."
             );
@@ -42,41 +113,76 @@ function App() {
             return;
         }
 
+
         try {
+
             setConnecting(true);
 
-            const accounts = await window.ethereum.request({
-                method: "eth_requestAccounts"
-            });
 
-            if (accounts && accounts.length > 0) {
-                const account = accounts[0];
+            const accounts =
+                await window.ethereum.request({
+                    method: "eth_requestAccounts"
+                });
 
-                // Agora sim o usuário autorizou a conexão
-                walletConnectedRef.current = true;
+
+            if (
+                accounts &&
+                accounts.length > 0
+            ) {
+
+                const account =
+                    accounts[0];
+
+
+                // Usuário autorizou
+                walletConnectedRef.current =
+                    true;
+
 
                 setWallet(account);
 
-                console.log("Wallet conectada:", account);
+
+                console.log(
+                    "Wallet conectada:",
+                    account
+                );
+
+
+                // Atualiza rede
+                const chainId =
+                    await window.ethereum.request({
+                        method: "eth_chainId"
+                    });
+
+
+                updateNetwork(chainId);
             }
 
+
         } catch (error) {
+
             console.error(
                 "Erro ao conectar carteira:",
                 error
             );
 
+
             if (error.code === 4001) {
+
                 alert(
                     "A conexão da carteira foi rejeitada no MetaMask."
                 );
+
             } else {
+
                 alert(
                     "Não foi possível conectar a carteira."
                 );
             }
 
+
         } finally {
+
             setConnecting(false);
         }
     }
@@ -87,8 +193,9 @@ function App() {
     // ==========================================
 
     function disconnectWallet() {
-        // Impede que accountsChanged reconecte a carteira
-        walletConnectedRef.current = false;
+
+        walletConnectedRef.current =
+            false;
 
         setWallet("");
 
@@ -103,9 +210,11 @@ function App() {
     // ==========================================
 
     useEffect(() => {
+
         if (!window.ethereum) {
             return;
         }
+
 
         function handleAccountsChanged(accounts) {
 
@@ -114,20 +223,14 @@ function App() {
                 accounts
             );
 
+
             /*
-             * IMPORTANTE:
-             *
-             * Se o usuário ainda NÃO clicou em
-             * Connect Wallet, ignoramos a conta.
-             *
-             * Isso impede que:
-             *
-             * 0xc2B5...
-             *
-             * apareça automaticamente.
+             * Se o usuário não conectou
+             * manualmente, ignoramos.
              */
 
             if (!walletConnectedRef.current) {
+
                 console.log(
                     "Conta ignorada: aplicação está desconectada."
                 );
@@ -136,12 +239,14 @@ function App() {
             }
 
 
-            // MetaMask ficou sem conta
+            // Nenhuma conta
             if (
                 !accounts ||
                 accounts.length === 0
             ) {
-                walletConnectedRef.current = false;
+
+                walletConnectedRef.current =
+                    false;
 
                 setWallet("");
 
@@ -149,8 +254,9 @@ function App() {
             }
 
 
-            // Usuário trocou de conta depois de conectar
+            // Usuário trocou de conta
             setWallet(accounts[0]);
+
 
             console.log(
                 "Wallet alterada para:",
@@ -166,6 +272,7 @@ function App() {
 
 
         return () => {
+
             window.ethereum.removeListener(
                 "accountsChanged",
                 handleAccountsChanged
@@ -180,25 +287,27 @@ function App() {
     // ==========================================
 
     useEffect(() => {
+
         if (!window.ethereum) {
             return;
         }
 
+
         async function loadNetwork() {
+
             try {
+
                 const chainId =
                     await window.ethereum.request({
                         method: "eth_chainId"
                     });
 
-                setNetwork(chainId);
 
-                console.log(
-                    "Chain ID:",
-                    chainId
-                );
+                updateNetwork(chainId);
+
 
             } catch (error) {
+
                 console.error(
                     "Erro ao detectar rede:",
                     error
@@ -206,16 +315,29 @@ function App() {
             }
         }
 
+
         loadNetwork();
 
 
+        // ==========================================
+        // CHAIN CHANGED
+        // ==========================================
+
         function handleChainChanged(chainId) {
+
             console.log(
                 "Rede alterada:",
                 chainId
             );
 
-            setNetwork(chainId);
+
+            updateNetwork(chainId);
+
+
+            /*
+             * Recarrega para garantir que
+             * provider/contract sejam recriados.
+             */
 
             window.location.reload();
         }
@@ -228,6 +350,7 @@ function App() {
 
 
         return () => {
+
             window.ethereum.removeListener(
                 "chainChanged",
                 handleChainChanged
@@ -242,6 +365,7 @@ function App() {
     // ==========================================
 
     function navigateTo(destination) {
+
         setPage(destination);
     }
 
@@ -255,6 +379,7 @@ function App() {
         switch (page) {
 
             case "create":
+
                 return (
                     <CreateAsset
                         setPage={setPage}
@@ -264,6 +389,7 @@ function App() {
 
 
             case "asset":
+
                 return (
                     <Asset
                         setPage={setPage}
@@ -275,6 +401,7 @@ function App() {
             case "dashboard":
 
             default:
+
                 return (
                     <Dashboard
                         setPage={setPage}
@@ -286,15 +413,20 @@ function App() {
 
 
     // ==========================================
-    // APP
+    // APP UI
     // ==========================================
 
     return (
+
         <div className="app">
 
-            {/* SIDEBAR */}
+
+            {/* ==================================
+                SIDEBAR
+            ================================== */}
 
             <aside className="sidebar">
+
 
                 {/* LOGO */}
 
@@ -313,6 +445,9 @@ function App() {
 
                 <nav>
 
+
+                    {/* DASHBOARD */}
+
                     <button
                         className={
                             page === "dashboard"
@@ -323,9 +458,13 @@ function App() {
                             navigateTo("dashboard")
                         }
                     >
+
                         Dashboard
+
                     </button>
 
+
+                    {/* CREATE MINERAL */}
 
                     <button
                         className={
@@ -337,18 +476,26 @@ function App() {
                             navigateTo("create")
                         }
                     >
+
                         + New Mineral
+
                     </button>
 
+
+                    {/* MY ASSETS */}
 
                     <button
                         onClick={() =>
                             navigateTo("dashboard")
                         }
                     >
+
                         My Assets
+
                     </button>
 
+
+                    {/* MARKETPLACE */}
 
                     <button
                         onClick={() =>
@@ -357,9 +504,13 @@ function App() {
                             )
                         }
                     >
+
                         Marketplace
+
                     </button>
 
+
+                    {/* AI ANALYTICS */}
 
                     <button
                         onClick={() =>
@@ -368,9 +519,13 @@ function App() {
                             )
                         }
                     >
+
                         AI Analytics
+
                     </button>
 
+
+                    {/* DOCUMENTS */}
 
                     <button
                         onClick={() =>
@@ -379,13 +534,17 @@ function App() {
                             )
                         }
                     >
+
                         Documents
+
                     </button>
 
                 </nav>
 
 
-                {/* NETWORK */}
+                {/* ==================================
+                    NETWORK
+                ================================== */}
 
                 <div className="network">
 
@@ -393,24 +552,31 @@ function App() {
                         NETWORK
                     </small>
 
+
                     <strong>
-                        Hardhat Local
+                        {networkName}
                     </strong>
 
+
                     <span>
-                        ● Local Testnet
+                        ● {networkStatus}
                     </span>
 
+
                     {network && (
+
                         <small>
                             Chain ID: {network}
                         </small>
+
                     )}
 
                 </div>
 
 
-                {/* CONNECTED WALLET */}
+                {/* ==================================
+                    CONNECTED WALLET
+                ================================== */}
 
                 {wallet && (
 
@@ -419,6 +585,7 @@ function App() {
                         <small>
                             CONNECTED WALLET
                         </small>
+
 
                         <strong>
                             {formatWallet(wallet)}
@@ -431,19 +598,26 @@ function App() {
             </aside>
 
 
-            {/* MAIN */}
+            {/* ==================================
+                MAIN
+            ================================== */}
 
             <main className="main">
 
-                {/* HEADER */}
+
+                {/* ==================================
+                    HEADER
+                ================================== */}
 
                 <header className="header">
+
 
                     <div>
 
                         <strong>
                             BOTMiner AI
                         </strong>
+
 
                         <span>
                             AI × RWA × Blockchain
@@ -452,7 +626,9 @@ function App() {
                     </div>
 
 
-                    {/* WALLET */}
+                    {/* ==================================
+                        WALLET
+                    ================================== */}
 
                     {!wallet ? (
 
@@ -473,6 +649,7 @@ function App() {
 
                         <div className="wallet-connected">
 
+
                             <span>
                                 {formatWallet(wallet)}
                             </span>
@@ -480,9 +657,13 @@ function App() {
 
                             <button
                                 className="disconnect-button"
-                                onClick={disconnectWallet}
+                                onClick={
+                                    disconnectWallet
+                                }
                             >
+
                                 Disconnect
+
                             </button>
 
                         </div>
@@ -492,7 +673,9 @@ function App() {
                 </header>
 
 
-                {/* PAGE CONTENT */}
+                {/* ==================================
+                    PAGE CONTENT
+                ================================== */}
 
                 {renderPage()}
 
