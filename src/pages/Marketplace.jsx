@@ -4,6 +4,7 @@ import {
   getReadContract, 
   getConnectedWallet 
 } from "../services/blockchain.jsx";
+import { FiRefreshCw } from "react-icons/fi";
 import "./Dashboard.css";
 
 function Marketplace({ setPage }) {
@@ -113,14 +114,13 @@ function Marketplace({ setPage }) {
             <h2>Available Assets</h2>
             <button 
               className="secondary-button" 
-              onClick={loadAIAnalytics}
+              onClick={loadMarketplaceAssets}
               disabled={loading}
               style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
             >
               <FiRefreshCw className={loading ? "spin-icon" : ""} />
               Refresh
             </button>
-        
           </div>
 
           {loading ? (

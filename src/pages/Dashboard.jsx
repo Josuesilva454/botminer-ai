@@ -4,9 +4,18 @@ import {
   getNFTBalance, 
   getMineral 
 } from "../services/blockchain";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell 
+} from "recharts";
 import "./Dashboard.css";
 
-function Dashboard({ setPage }) {
+function Dashboard({ setPage, setSelectedTokenId }) {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState("");
@@ -32,7 +41,6 @@ function Dashboard({ setPage }) {
         return;
       }
 
-      // 1. Fetch total number of NFTs owned by the user
       const balanceBig = await getNFTBalance(userWallet);
       const balance = Number(balanceBig);
 
@@ -41,12 +49,10 @@ function Dashboard({ setPage }) {
       let verifiedCnt = 0;
       let scoreSum = 0;
 
-      // 2. Iterate through token IDs and read data directly from Smart Contract
       for (let i = 1; i <= balance; i++) {
         try {
           const mineralData = await getMineral(i);
 
-          // Convert BigInt values to readable units according to contract scaling
           const weightTons = Number(mineralData.weight) / 1000;
           const purityPercent = Number(mineralData.purity) / 100;
           const valueUSD = Number(mineralData.estimatedValue);
@@ -56,7 +62,7 @@ function Dashboard({ setPage }) {
           const assetItem = {
             id: `TOKEN-#${i}`,
             tokenId: i,
-            mineral: mineralData.mineralType,
+            mineral: mineralData.mineralType || "Mineral Asset",
             weight: `${weightTons} TON`,
             purity: `${purityPercent}%`,
             score: score,
@@ -66,7 +72,6 @@ function Dashboard({ setPage }) {
 
           loadedAssets.push(assetItem);
 
-          // Calculate Dashboard metrics
           totalVal += valueUSD;
           if (isVerified) verifiedCnt++;
           scoreSum += score;
@@ -89,6 +94,17 @@ function Dashboard({ setPage }) {
       setLoading(false);
     }
   }
+
+  // Função para navegar e carregar o ID correto do ativo no Asset.jsx
+  const handleViewAsset = (tokenId) => {
+    if (setSelectedTokenId) {
+      setSelectedTokenId(tokenId);
+    }
+    setPage("asset");
+  };
+
+  // Cores personalizadas para as barras do gráfico
+  const BAR_COLORS = ["#0052ff", "#00d2ff", "#7928ca", "#ff0080", "#4ea8de"];
 
   return (
     <div className="dashboard">
@@ -135,6 +151,42 @@ function Dashboard({ setPage }) {
         </div>
       </section>
 
+      {/* GRÁFICO DE DISTRIBUIÇÃO DE VALOR */}
+      <section className="panel" style={{ marginBottom: "1.5rem" }}>
+        <div className="panel-header">
+          <h2>Asset Portfolio Valuation ($ USD)</h2>
+        </div>
+        
+        {assets.length === 0 ? (
+          <p style={{ padding: "1rem", color: "#888" }}>
+            No chart data available. Mint or load assets to view analytics.
+          </p>
+        ) : (
+          <div style={{ width: "100%", height: 260, marginTop: "1rem" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={assets} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                <XAxis dataKey="mineral" stroke="#888888" fontSize={12} tickLine={false} />
+                <YAxis 
+                  stroke="#888888" 
+                  fontSize={12} 
+                  tickLine={false}
+                  tickFormatter={(val) => `$${val.toLocaleString()}`} 
+                />
+                <Tooltip 
+                  formatter={(value) => [`$${value.toLocaleString()}`, "Estimated Value"]}
+                  contentStyle={{ backgroundColor: "#1a1d24", borderRadius: "8px", border: "1px solid #333", color: "#fff" }}
+                />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                  {assets.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </section>
+
       <div className="dashboard-grid">
         <section className="panel">
           <div className="panel-header">
@@ -158,7 +210,7 @@ function Dashboard({ setPage }) {
             assets.map((asset) => (
               <div className="asset" key={asset.id}>
                 <div className="mineral-icon">
-                  {asset.mineral.substring(0, 2).toUpperCase()}
+                  {(asset.mineral || "NA").substring(0, 2).toUpperCase()}
                 </div>
 
                 <div className="asset-name">
@@ -183,7 +235,7 @@ function Dashboard({ setPage }) {
 
                 <button
                   className="view-button"
-                  onClick={() => setPage("asset")}
+                  onClick={() => handleViewAsset(asset.tokenId)}
                 >
                   View
                 </button>
