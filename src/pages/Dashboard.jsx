@@ -5,13 +5,12 @@ import {
   getMineral 
 } from "../services/blockchain";
 import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
+  PieChart, 
+  Pie, 
+  Cell, 
   Tooltip, 
   ResponsiveContainer, 
-  Cell 
+  Legend 
 } from "recharts";
 import "./Dashboard.css";
 
@@ -95,7 +94,6 @@ function Dashboard({ setPage, setSelectedTokenId }) {
     }
   }
 
-  // Função para navegar e carregar o ID correto do ativo no Asset.jsx
   const handleViewAsset = (tokenId) => {
     if (setSelectedTokenId) {
       setSelectedTokenId(tokenId);
@@ -103,8 +101,8 @@ function Dashboard({ setPage, setSelectedTokenId }) {
     setPage("asset");
   };
 
-  // Cores personalizadas para as barras do gráfico
-  const BAR_COLORS = ["#0052ff", "#00d2ff", "#7928ca", "#ff0080", "#4ea8de"];
+  // Paleta de cores vibrantes estilo Web3/Cyberpunk
+  const PIE_COLORS = ["#0052FF", "#00D2FF", "#7928CA", "#FF0080", "#FF9900", "#10B981"];
 
   return (
     <div className="dashboard">
@@ -151,10 +149,10 @@ function Dashboard({ setPage, setSelectedTokenId }) {
         </div>
       </section>
 
-      {/* GRÁFICO DE DISTRIBUIÇÃO DE VALOR */}
+      {/* GRÁFICO DE PIZZA (DONUT EFFECT) */}
       <section className="panel" style={{ marginBottom: "1.5rem" }}>
         <div className="panel-header">
-          <h2>Asset Portfolio Valuation ($ USD)</h2>
+          <h2>Portfolio Asset Allocation ($ USD)</h2>
         </div>
         
         {assets.length === 0 ? (
@@ -162,26 +160,46 @@ function Dashboard({ setPage, setSelectedTokenId }) {
             No chart data available. Mint or load assets to view analytics.
           </p>
         ) : (
-          <div style={{ width: "100%", height: 260, marginTop: "1rem" }}>
+          <div style={{ width: "100%", height: 320, marginTop: "1rem" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={assets} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
-                <XAxis dataKey="mineral" stroke="#888888" fontSize={12} tickLine={false} />
-                <YAxis 
-                  stroke="#888888" 
-                  fontSize={12} 
-                  tickLine={false}
-                  tickFormatter={(val) => `$${val.toLocaleString()}`} 
-                />
-                <Tooltip 
-                  formatter={(value) => [`$${value.toLocaleString()}`, "Estimated Value"]}
-                  contentStyle={{ backgroundColor: "#1a1d24", borderRadius: "8px", border: "1px solid #333", color: "#fff" }}
-                />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+              <PieChart>
+                <Pie
+                  data={assets}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70} // Cria o efeito Donut/Pizza Vazada
+                  outerRadius={105}
+                  paddingAngle={5} // Separação elegante entre as fatias
+                  cornerRadius={6} // Borda arredondada nas pontas
+                  dataKey="value"
+                  nameKey="mineral"
+                  animationDuration={800}
+                >
                   {assets.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={PIE_COLORS[index % PIE_COLORS.length]} 
+                      stroke="none"
+                    />
                   ))}
-                </Bar>
-              </BarChart>
+                </Pie>
+                <Tooltip 
+                  formatter={(value) => [`$${Number(value).toLocaleString()}`, "Estimated Value"]}
+                  contentStyle={{ 
+                    backgroundColor: "#11141a", 
+                    borderRadius: "10px", 
+                    border: "1px solid #2a2e39", 
+                    color: "#fff",
+                    boxShadow: "0px 4px 12px rgba(0,0,0,0.5)"
+                  }}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  iconType="circle"
+                  formatter={(value) => <span style={{ color: "#aaa", fontSize: "13px" }}>{value}</span>}
+                />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         )}
