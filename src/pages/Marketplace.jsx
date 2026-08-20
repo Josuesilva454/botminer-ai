@@ -111,9 +111,16 @@ function Marketplace({ setPage }) {
         <section className="panel" style={{ gridColumn: "span 3" }}>
           <div className="panel-header">
             <h2>Available Assets</h2>
-            <button className="secondary-button" onClick={loadMarketplaceAssets}>
-              🔄 Refresh
+            <button 
+              className="secondary-button" 
+              onClick={loadAIAnalytics}
+              disabled={loading}
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+            >
+              <FiRefreshCw className={loading ? "spin-icon" : ""} />
+              Refresh
             </button>
+        
           </div>
 
           {loading ? (
