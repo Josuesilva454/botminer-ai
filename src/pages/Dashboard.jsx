@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import { 
   getConnectedWallet, 
   getNFTBalance, 
@@ -18,6 +19,8 @@ function Dashboard({ setPage, setSelectedTokenId }) {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState("");
+  const [notification, setNotification] = useState({ show: false, message: "", type: "info" });
+  
   const [stats, setStats] = useState({
     totalCount: 0,
     totalValue: 0,
@@ -29,53 +32,93 @@ function Dashboard({ setPage, setSelectedTokenId }) {
     loadDashboardData();
   }, []);
 
+  // Helper para exibir notificações na tela ao invés de alert() ou console
+  const showToast = (message, type = "info") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: "", type: "info" });
+    }, 4000);
+  };
+
   async function loadDashboardData() {
     try {
       setLoading(true);
-      const userWallet = await getConnectedWallet();
+      const userWallet = await getConnectedWallet().catch(() => "");
       setWallet(userWallet);
-
-      if (!userWallet) {
-        setLoading(false);
-        return;
-      }
-
-      const balanceBig = await getNFTBalance(userWallet);
-      const balance = Number(balanceBig);
 
       const loadedAssets = [];
       let totalVal = 0;
       let verifiedCnt = 0;
       let scoreSum = 0;
 
-      for (let i = 1; i <= balance; i++) {
+      if (userWallet) {
         try {
-          const mineralData = await getMineral(i);
+          const balanceBig = await getNFTBalance(userWallet);
+          const balance = Number(balanceBig);
 
-          const weightTons = Number(mineralData.weight) / 1000;
-          const purityPercent = Number(mineralData.purity) / 100;
-          const valueUSD = Number(mineralData.estimatedValue);
-          const score = Number(mineralData.aiScore);
-          const isVerified = mineralData.verified;
+          for (let i = 1; i <= balance; i++) {
+            try {
+              const mineralData = await getMineral(i);
 
-          const assetItem = {
-            id: `TOKEN-#${i}`,
-            tokenId: i,
-            mineral: mineralData.mineralType || "Mineral Asset",
-            weight: `${weightTons} TON`,
-            purity: `${purityPercent}%`,
-            score: score,
-            value: valueUSD,
-            verified: isVerified
-          };
+              const weightTons = mineralData.weight ? String(Number(mineralData.weight) / 1000) : "0";
+              const purityPercent = mineralData.purity ? String(Number(mineralData.purity) / 100) : "0";
+              
+              // Converte Wei para BOT (ex: 1500000000000000000 -> 1.5)
+              const rawEthValue = mineralData.estimatedValue 
+                ? parseFloat(ethers.formatEther(mineralData.estimatedValue)) 
+                : 0;
 
-          loadedAssets.push(assetItem);
+              const score = Number(mineralData.aiScore || 0);
+              const isVerified = Boolean(mineralData.verified);
 
-          totalVal += valueUSD;
-          if (isVerified) verifiedCnt++;
-          scoreSum += score;
-        } catch (err) {
-          console.warn(`Error loading token #${i}:`, err);
+              const assetItem = {
+                id: `TOKEN-#${i}`,
+                tokenId: i,
+                mineral: mineralData.mineralType || "Mineral Asset",
+                weight: `${weightTons} TON`,
+                purity: `${purityPercent}%`,
+                score: score,
+                value: rawEthValue,
+                verified: isVerified
+              };
+
+              loadedAssets.push(assetItem);
+              totalVal += rawEthValue;
+              if (isVerified) verifiedCnt++;
+              scoreSum += score;
+            } catch (err) {
+              // Silencioso sem usar console.warn
+            }
+          }
+        } catch (balErr) {
+          showToast("Não foi possível carregar o saldo diretamente da blockchain.", "error");
+        }
+      }
+
+      // Fallback: LocalStorage
+      if (loadedAssets.length === 0) {
+        const savedAsset = JSON.parse(localStorage.getItem("botminer_asset"));
+        if (savedAsset) {
+          const rawVal = savedAsset.estimatedValue 
+            ? parseFloat(ethers.formatEther(savedAsset.estimatedValue))
+            : Number(savedAsset.value || 0);
+            
+          const sc = Number(savedAsset.aiScore || 0);
+
+          loadedAssets.push({
+            id: savedAsset.id || `TOKEN-#${savedAsset.tokenId || 1}`,
+            tokenId: savedAsset.tokenId || 1,
+            mineral: savedAsset.mineralType || savedAsset.mineral || "Mineral Asset",
+            weight: `${savedAsset.weight || 0} TON`,
+            purity: `${savedAsset.purity || 0}%`,
+            score: sc,
+            value: rawVal,
+            verified: Boolean(savedAsset.verified)
+          });
+
+          totalVal += rawVal;
+          if (savedAsset.verified) verifiedCnt++;
+          scoreSum += sc;
         }
       }
 
@@ -88,7 +131,7 @@ function Dashboard({ setPage, setSelectedTokenId }) {
       });
 
     } catch (error) {
-      console.error("Error loading blockchain data:", error);
+      showToast("Erro ao processar dados do Dashboard.", "error");
     } finally {
       setLoading(false);
     }
@@ -101,11 +144,17 @@ function Dashboard({ setPage, setSelectedTokenId }) {
     setPage("asset");
   };
 
-  // Paleta de cores vibrantes estilo Web3/Cyberpunk
   const PIE_COLORS = ["#0052FF", "#00D2FF", "#7928CA", "#FF0080", "#FF9900", "#10B981"];
 
   return (
     <div className="dashboard">
+      {/* BANNER DE MENSAGEM (Substitui alerts e consoles) */}
+      {notification.show && (
+        <div className={`dashboard-toast ${notification.type}`}>
+          {notification.message}
+        </div>
+      )}
+
       <div className="page-title">
         <div>
           <h1>Dashboard</h1>
@@ -114,7 +163,7 @@ function Dashboard({ setPage, setSelectedTokenId }) {
 
         <button
           className="primary-button"
-          onClick={() => setPage("create")}
+          onClick={() => setPage("createAsset")}
         >
           + New Mineral
         </button>
@@ -130,11 +179,7 @@ function Dashboard({ setPage, setSelectedTokenId }) {
         <div className="stat">
           <small>Tokenized Value</small>
           <strong>
-            {new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "USD",
-              maximumFractionDigits: 0
-            }).format(stats.totalValue)}
+            {stats.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} BOT
           </strong>
         </div>
 
@@ -149,10 +194,10 @@ function Dashboard({ setPage, setSelectedTokenId }) {
         </div>
       </section>
 
-      {/* GRÁFICO DE PIZZA (DONUT EFFECT) */}
+      {/* GRÁFICO DE PIZZA */}
       <section className="panel" style={{ marginBottom: "1.5rem" }}>
         <div className="panel-header">
-          <h2>Portfolio Asset Allocation ($ USD)</h2>
+          <h2>Portfolio Asset Allocation (BOT)</h2>
         </div>
         
         {assets.length === 0 ? (
@@ -167,10 +212,10 @@ function Dashboard({ setPage, setSelectedTokenId }) {
                   data={assets}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70} // Cria o efeito Donut/Pizza Vazada
+                  innerRadius={70}
                   outerRadius={105}
-                  paddingAngle={5} // Separação elegante entre as fatias
-                  cornerRadius={6} // Borda arredondada nas pontas
+                  paddingAngle={5}
+                  cornerRadius={6}
                   dataKey="value"
                   nameKey="mineral"
                   animationDuration={800}
@@ -184,7 +229,7 @@ function Dashboard({ setPage, setSelectedTokenId }) {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value) => [`$${Number(value).toLocaleString()}`, "Estimated Value"]}
+                  formatter={(value) => [`${Number(value).toLocaleString()} BOT`, "Estimated Value"]}
                   contentStyle={{ 
                     backgroundColor: "#11141a", 
                     borderRadius: "10px", 
@@ -209,10 +254,10 @@ function Dashboard({ setPage, setSelectedTokenId }) {
         <section className="panel">
           <div className="panel-header">
             <h2>Recent Assets</h2>
-            <button onClick={() => setPage("create")}>+ Register</button>
+            <button onClick={() => setPage("createAsset")}>+ Register</button>
           </div>
 
-          {!wallet ? (
+          {!wallet && assets.length === 0 ? (
             <p style={{ padding: "1rem", color: "#888" }}>
               Please connect your wallet to load your tokenized assets.
             </p>
@@ -276,7 +321,10 @@ function Dashboard({ setPage, setSelectedTokenId }) {
 
           <small>Average Confidence Score</small>
 
-          <button className="primary-button full">
+          <button 
+            className="primary-button full"
+            onClick={() => setPage("createAsset")}
+          >
             Analyze Asset
           </button>
         </section>

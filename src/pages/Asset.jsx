@@ -3,18 +3,19 @@ import "./Asset.css";
 import {
   getMineral,
   getMineralOwner
-} from "../services/rwa";
+} from "../services/blockchain";
 import { TbPdf } from "react-icons/tb";
 import { jsPDF } from "jspdf";
 
-function Asset({ setPage, tokenId = 1 }) {
+function Asset({ setPage, tokenId: propTokenId }) {
   const [mineral, setMineral] = useState(null);
   const [owner, setOwner] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTokenId, setActiveTokenId] = useState(propTokenId || "1");
 
   // ==========================================
-  // LOAD DATA FROM BLOCKCHAIN
+  // LOAD DATA FROM BLOCKCHAIN / LOCALSTORAGE
   // ==========================================
   useEffect(() => {
     async function loadAsset() {
@@ -22,8 +23,33 @@ function Asset({ setPage, tokenId = 1 }) {
         setLoading(true);
         setError("");
 
-        const data = await getMineral(tokenId);
-        const mineralOwner = await getMineralOwner(tokenId);
+        // Attempt to retrieve ID from props or localStorage
+        let targetId = propTokenId;
+        const savedAsset = JSON.parse(localStorage.getItem("botminer_asset"));
+
+        if (!targetId && savedAsset?.tokenId) {
+          targetId = savedAsset.tokenId;
+        }
+
+        targetId = targetId || "1";
+        setActiveTokenId(targetId);
+
+        let data = null;
+        let mineralOwner = "";
+
+        // On-chain read with local fallback
+        try {
+          data = await getMineral(targetId);
+          mineralOwner = await getMineralOwner(targetId);
+        } catch (chainErr) {
+          console.warn("Direct network read failed, falling back to local data:", chainErr);
+          if (savedAsset) {
+            data = savedAsset;
+            mineralOwner = savedAsset.owner || "";
+          } else {
+            throw chainErr;
+          }
+        }
 
         setMineral(data);
         setOwner(mineralOwner);
@@ -40,7 +66,7 @@ function Asset({ setPage, tokenId = 1 }) {
     }
 
     loadAsset();
-  }, [tokenId]);
+  }, [propTokenId]);
 
   // ==========================================
   // GENERATE PDF CERTIFICATE (jsPDF)
@@ -50,7 +76,7 @@ function Asset({ setPage, tokenId = 1 }) {
 
     const doc = new jsPDF();
 
-    // Cabeçalho / Título
+    // Header / Title
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     doc.setTextColor(0, 82, 255);
@@ -65,7 +91,7 @@ function Asset({ setPage, tokenId = 1 }) {
     doc.setDrawColor(200, 200, 200);
     doc.line(20, 36, 190, 36);
 
-    // Seção: Asset Identification
+    // Section: Asset Identification
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(0, 0, 0);
@@ -74,18 +100,18 @@ function Asset({ setPage, tokenId = 1 }) {
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     
-    const formattedPurity = (Number(mineral.purity) / 100).toFixed(2);
-    const formattedWeight = (Number(mineral.weight) / 1000).toFixed(3);
-    const formattedValue = Number(mineral.estimatedValue).toLocaleString("en-US");
+    const formattedPurity = mineral.purity ? String(mineral.purity) : "0";
+    const formattedWeight = mineral.weight ? String(mineral.weight) : "0";
+    const formattedValue = Number(mineral.estimatedValue || mineral.value || 0).toLocaleString("en-US");
 
-    doc.text(`Token ID: #${tokenId}`, 20, 58);
-    doc.text(`Mineral Type: ${mineral.mineralType || "N/A"}`, 20, 66);
+    doc.text(`Token ID: #${activeTokenId}`, 20, 58);
+    doc.text(`Mineral Type: ${mineral.mineralType || mineral.mineral || "N/A"}`, 20, 66);
     doc.text(`Weight: ${formattedWeight} tons`, 20, 74);
     doc.text(`Purity: ${formattedPurity}%`, 20, 82);
     doc.text(`Origin: ${mineral.origin || "N/A"}`, 20, 90);
-    doc.text(`Estimated Value: $${formattedValue} USD`, 20, 98);
+    doc.text(`Estimated Value: ${formattedValue} BOT`, 20, 98);
 
-    // Seção: AI Status
+    // Section: AI Status
     doc.setDrawColor(230, 230, 230);
     doc.line(20, 106, 190, 106);
 
@@ -95,10 +121,10 @@ function Asset({ setPage, tokenId = 1 }) {
 
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`AI Score: ${mineral.aiScore}/100`, 20, 128);
+    doc.text(`AI Score: ${mineral.aiScore || 0}/100`, 20, 128);
     doc.text(`Status: ${mineral.verified ? "VERIFIED ON-CHAIN" : "PENDING"}`, 20, 136);
 
-    // Seção: Ownership & Blockchain
+    // Section: Ownership & Blockchain
     doc.line(20, 144, 190, 144);
 
     doc.setFontSize(14);
@@ -109,25 +135,25 @@ function Asset({ setPage, tokenId = 1 }) {
     doc.setFont("helvetica", "normal");
     doc.text("Owner Address:", 20, 166);
     doc.setFont("courier", "normal");
-    doc.text(owner || "N/A", 20, 172);
+    doc.text(owner || mineral.owner || "N/A", 20, 172);
 
     doc.setFont("helvetica", "normal");
     doc.text("Contract Address:", 20, 182);
     doc.setFont("courier", "normal");
     doc.text(import.meta.env.VITE_MINERAL_RWA_ADDRESS || "Not configured", 20, 188);
 
-    // Rodapé
+    // Footer
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
     doc.setTextColor(150, 150, 150);
     doc.text("BOT Chain RWA Protocol - Verifiable On-Chain Digital Asset Document", 20, 280);
 
-    // Salvar arquivo
-    doc.save(`Asset_Certificate_Token_${tokenId}.pdf`);
+    // Save PDF
+    doc.save(`Asset_Certificate_Token_${activeTokenId}.pdf`);
   }
 
   // ==========================================
-  // LOADING
+  // LOADING STATE
   // ==========================================
   if (loading) {
     return (
@@ -141,7 +167,7 @@ function Asset({ setPage, tokenId = 1 }) {
   }
 
   // ==========================================
-  // ERROR
+  // ERROR STATE
   // ==========================================
   if (error) {
     return (
@@ -173,14 +199,14 @@ function Asset({ setPage, tokenId = 1 }) {
   }
 
   // ==========================================
-  // NO ASSET
+  // NO ASSET FOUND
   // ==========================================
   if (!mineral) {
     return (
       <div className="page">
         <section className="form-panel">
           <h2>Mineral not found</h2>
-          <p>Token #{tokenId} does not exist.</p>
+          <p>Token #{activeTokenId} does not exist.</p>
         </section>
       </div>
     );
@@ -189,12 +215,14 @@ function Asset({ setPage, tokenId = 1 }) {
   // ==========================================
   // FORMAT VALUES
   // ==========================================
-  const purity = (Number(mineral.purity) / 100).toFixed(2);
-  const weight = (Number(mineral.weight) / 1000).toFixed(3);
-  const estimatedValue = Number(mineral.estimatedValue).toLocaleString("en-US");
+  const purity = mineral.purity ? String(mineral.purity) : "0";
+  const weight = mineral.weight ? String(mineral.weight) : "0";
+  const estimatedValue = Number(mineral.estimatedValue || mineral.value || 0).toLocaleString("en-US");
 
   const createdDate = mineral.createdAt
-    ? new Date(Number(mineral.createdAt) * 1000).toLocaleString()
+    ? (isNaN(Number(mineral.createdAt)) 
+        ? new Date(mineral.createdAt).toLocaleString() 
+        : new Date(Number(mineral.createdAt) * 1000).toLocaleString())
     : "N/A";
 
   const status = mineral.verified
@@ -221,12 +249,12 @@ function Asset({ setPage, tokenId = 1 }) {
         <div className="form-grid">
           <div className="form-group">
             <label>Token ID</label>
-            <input value={`#${tokenId}`} readOnly />
+            <input value={`#${activeTokenId}`} readOnly />
           </div>
 
           <div className="form-group">
             <label>Mineral</label>
-            <input value={mineral.mineralType} readOnly />
+            <input value={mineral.mineralType || mineral.mineral || ""} readOnly />
           </div>
 
           <div className="form-group">
@@ -241,12 +269,12 @@ function Asset({ setPage, tokenId = 1 }) {
 
           <div className="form-group">
             <label>Origin</label>
-            <input value={mineral.origin} readOnly />
+            <input value={mineral.origin || ""} readOnly />
           </div>
 
           <div className="form-group">
             <label>Estimated Value</label>
-            <input value={`$${estimatedValue}`} readOnly />
+            <input value={`${estimatedValue} BOT`} readOnly />
           </div>
 
           <div className="form-group">
@@ -256,7 +284,7 @@ function Asset({ setPage, tokenId = 1 }) {
 
           <div className="form-group">
             <label>Owner</label>
-            <input value={owner} readOnly />
+            <input value={owner || mineral.owner || "N/A"} readOnly />
           </div>
         </div>
       </section>
@@ -267,7 +295,7 @@ function Asset({ setPage, tokenId = 1 }) {
         <div className="form-grid">
           <div className="form-group">
             <label>AI Score</label>
-            <input value={`${mineral.aiScore}/100`} readOnly />
+            <input value={`${mineral.aiScore || 0}/100`} readOnly />
           </div>
 
           <div className="form-group">
@@ -313,7 +341,7 @@ function Asset({ setPage, tokenId = 1 }) {
         <div className="form-grid">
           <div className="form-group">
             <label>Network</label>
-            <input value="Hardhat Local" readOnly />
+            <input value="BOT Chain Testnet" readOnly />
           </div>
 
           <div className="form-group">

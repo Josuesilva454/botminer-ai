@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import { 
   getContract, 
   getReadContract, 
-  getConnectedWallet 
+  getConnectedWallet,
+  buyMineral,
+  getBlockchainError
 } from "../services/blockchain.jsx";
 import { FiRefreshCw } from "react-icons/fi";
 import "./Dashboard.css";
@@ -10,7 +13,9 @@ import "./Dashboard.css";
 function Marketplace({ setPage }) {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [buyingId, setBuyingId] = useState(null);
   const [wallet, setWallet] = useState("");
+  const [notification, setNotification] = useState({ type: "", message: "" });
 
   useEffect(() => {
     initMarketplace();
@@ -31,13 +36,11 @@ function Marketplace({ setPage }) {
       setLoading(true);
       const readContract = await getReadContract();
 
-      // Fetch token balance or loop through items safely
       let totalTokens = 0;
       try {
-        const total = await readContract.totalSupply();
-        totalTokens = Number(total);
+        const total = await readContract.nextTokenId();
+        totalTokens = Number(total) - 1;
       } catch {
-        // Fallback if totalSupply is not defined on contract: try query first 50
         totalTokens = 50; 
       }
 
@@ -48,10 +51,12 @@ function Marketplace({ setPage }) {
           const mineral = await readContract.getMineral(i);
           const owner = await readContract.ownerOf(i);
 
-          // Convert BigInt values to readable numbers
+          // BigInt conversion and scaling
           const weightVal = Number(mineral.weight) / 1000;
           const purityVal = Number(mineral.purity) / 100;
-          const estimatedValue = Number(mineral.estimatedValue);
+          
+          // Formats Wei to a readable string (e.g., 1.0 BOT / USD)
+          const priceInEth = ethers.formatEther(mineral.estimatedValue);
 
           loadedAssets.push({
             id: `TOKEN-#${i}`,
@@ -59,7 +64,8 @@ function Marketplace({ setPage }) {
             mineral: mineral.mineralType || "Unknown Mineral",
             weight: `${weightVal} TON`,
             purity: `${purityVal}%`,
-            price: `$${estimatedValue.toLocaleString()}`,
+            priceFormatted: `$${priceInEth} BOT`,
+            priceRaw: priceInEth,
             score: Number(mineral.aiScore) || 0,
             seller: owner,
             verified: mineral.verified
@@ -72,30 +78,45 @@ function Marketplace({ setPage }) {
 
       setListings(loadedAssets);
     } catch (error) {
-      console.error("Error loading Marketplace assets:", error);
+      setNotification({
+        type: "error",
+        message: "Failed to load marketplace assets from the blockchain."
+      });
     } finally {
       setLoading(false);
     }
   }
 
-  // Handle asset purchase via Smart Contract
+  // Buy asset using the blockchain.js service
   async function handleBuy(item) {
+    setNotification({ type: "", message: "" });
+
     if (!wallet) {
-      alert("Please connect your wallet to make a purchase.");
+      setNotification({
+        type: "error",
+        message: "Please connect your wallet to make a purchase."
+      });
       return;
     }
 
     try {
-      const contract = await getContract();
-      // Execute buy transaction
-      const tx = await contract.buyMineral(item.tokenId);
-      await tx.wait();
+      setBuyingId(item.tokenId);
 
-      alert(`Asset ${item.id} successfully purchased!`);
-      loadMarketplaceAssets(); // Reload list after purchase
+      // Execute purchase with token ID and exact price value
+      const result = await buyMineral(item.tokenId, item.priceRaw);
+      
+      setNotification({
+        type: "success",
+        message: `Asset ${item.id} successfully purchased! Transaction Hash: ${result.hash}`
+      });
+      await loadMarketplaceAssets(); // Reload assets
     } catch (error) {
-      console.error("Purchase error:", error);
-      alert("Failed to process asset purchase.");
+      setNotification({
+        type: "error",
+        message: `Purchase failed: ${error.message}`
+      });
+    } finally {
+      setBuyingId(null);
     }
   }
 
@@ -123,53 +144,67 @@ function Marketplace({ setPage }) {
             </button>
           </div>
 
+          {/* UI NOTIFICATION MESSAGE */}
+          {notification.message && (
+            <div className={`status-message ${notification.type}`}>
+              {notification.message}
+            </div>
+          )}
+
           {loading ? (
             <p style={{ padding: "1rem", color: "#888" }}>Loading blockchain assets...</p>
           ) : listings.length === 0 ? (
             <p style={{ padding: "1rem", color: "#888" }}>No mineral assets registered yet.</p>
           ) : (
-            listings.map((item) => (
-              <div className="asset" key={item.id}>
-                <div className="mineral-icon">
-                  {item.mineral.substring(0, 2).toUpperCase()}
-                </div>
+            listings.map((item) => {
+              const isOwner = wallet && item.seller.toLowerCase() === wallet.toLowerCase();
+              const isBuyingThis = buyingId === item.tokenId;
 
-                <div className="asset-name">
-                  <strong>{item.id}</strong>
-                  <span>{item.mineral}</span>
-                </div>
+              return (
+                <div className="asset" key={item.id}>
+                  <div className="mineral-icon">
+                    {item.mineral.substring(0, 2).toUpperCase()}
+                  </div>
 
-                <div>
-                  <small>Weight</small>
-                  <strong>{item.weight}</strong>
-                </div>
+                  <div className="asset-name">
+                    <strong>{item.id}</strong>
+                    <span>{item.mineral}</span>
+                  </div>
 
-                <div>
-                  <small>Purity</small>
-                  <strong>{item.purity}</strong>
-                </div>
+                  <div>
+                    <small>Weight</small>
+                    <strong>{item.weight}</strong>
+                  </div>
 
-                <div>
-                  <small>AI Score</small>
-                  <strong>{item.score}/100</strong>
-                </div>
+                  <div>
+                    <small>Purity</small>
+                    <strong>{item.purity}</strong>
+                  </div>
 
-                <div>
-                  <small>Price</small>
-                  <strong>{item.price}</strong>
-                </div>
+                  <div>
+                    <small>AI Score</small>
+                    <strong>{item.score}/100</strong>
+                  </div>
 
-                <button
-                  className="primary-button"
-                  onClick={() => handleBuy(item)}
-                  disabled={Boolean(wallet && item.seller.toLowerCase() === wallet.toLowerCase())}
-                >
-                  {wallet && item.seller.toLowerCase() === wallet.toLowerCase()
-                    ? "Your Asset"
-                    : "Buy Asset"}
-                </button>
-              </div>
-            ))
+                  <div>
+                    <small>Price</small>
+                    <strong>{item.priceFormatted}</strong>
+                  </div>
+
+                  <button
+                    className="primary-button"
+                    onClick={() => handleBuy(item)}
+                    disabled={isOwner || isBuyingThis}
+                  >
+                    {isBuyingThis 
+                      ? "Processing..." 
+                      : isOwner 
+                      ? "Your Asset" 
+                      : "Buy Asset"}
+                  </button>
+                </div>
+              );
+            })
           )}
         </section>
       </div>

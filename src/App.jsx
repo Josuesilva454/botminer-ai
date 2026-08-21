@@ -38,6 +38,9 @@ function App() {
     const [connecting, setConnecting] = useState(false);
     const [networkName, setNetworkName] = useState("Unknown Network");
     const [networkStatus, setNetworkStatus] = useState("");
+    
+    // UI Notification State
+    const [notification, setNotification] = useState({ type: "", message: "" });
 
     // ==========================================
     // CONTROL WALLET CONNECTION
@@ -71,8 +74,6 @@ function App() {
             setNetworkName("Unknown Network");
             setNetworkStatus("Unsupported Network");
         }
-
-        console.log("Chain ID:", chainId);
     }
 
     // ==========================================
@@ -80,10 +81,13 @@ function App() {
     // ==========================================
 
     async function connectWallet() {
+        setNotification({ type: "", message: "" });
+
         if (!window.ethereum) {
-            alert(
-                "MetaMask não encontrada. Instale a extensão MetaMask para continuar."
-            );
+            setNotification({
+                type: "error",
+                message: "MetaMask not found. Please install the MetaMask extension to continue."
+            });
             return;
         }
 
@@ -100,21 +104,27 @@ function App() {
                 walletConnectedRef.current = true;
                 setWallet(account);
 
-                console.log("Wallet conectada:", account);
-
                 const chainId = await window.ethereum.request({
                     method: "eth_chainId"
                 });
 
                 updateNetwork(chainId);
+                setNotification({
+                    type: "success",
+                    message: "Wallet successfully connected!"
+                });
             }
         } catch (error) {
-            console.error("Erro ao conectar carteira:", error);
-
             if (error.code === 4001) {
-                alert("A conexão da carteira foi rejeitada no MetaMask.");
+                setNotification({
+                    type: "error",
+                    message: "Wallet connection was rejected in MetaMask."
+                });
             } else {
-                alert("Não foi possível conectar a carteira.");
+                setNotification({
+                    type: "error",
+                    message: "Failed to connect wallet. Please try again."
+                });
             }
         } finally {
             setConnecting(false);
@@ -129,7 +139,10 @@ function App() {
         walletConnectedRef.current = false;
         setWallet("");
         setPage("dashboard");
-        console.log("Wallet desconectada da aplicação.");
+        setNotification({
+            type: "info",
+            message: "Wallet disconnected successfully."
+        });
     }
 
     // ==========================================
@@ -142,10 +155,7 @@ function App() {
         }
 
         function handleAccountsChanged(accounts) {
-            console.log("MetaMask accountsChanged:", accounts);
-
             if (!walletConnectedRef.current) {
-                console.log("Conta ignorada: aplicação está desconectada.");
                 return;
             }
 
@@ -153,11 +163,18 @@ function App() {
                 walletConnectedRef.current = false;
                 setWallet("");
                 setPage("dashboard");
+                setNotification({
+                    type: "info",
+                    message: "Wallet disconnected via MetaMask."
+                });
                 return;
             }
 
             setWallet(accounts[0]);
-            console.log("Wallet alterada para:", accounts[0]);
+            setNotification({
+                type: "info",
+                message: `Active account changed to ${formatWallet(accounts[0])}`
+            });
         }
 
         window.ethereum.on("accountsChanged", handleAccountsChanged);
@@ -183,14 +200,16 @@ function App() {
                 });
                 updateNetwork(chainId);
             } catch (error) {
-                console.error("Erro ao detectar rede:", error);
+                setNotification({
+                    type: "error",
+                    message: "Error detecting network configuration."
+                });
             }
         }
 
         loadNetwork();
 
         function handleChainChanged(chainId) {
-            console.log("Rede alterada:", chainId);
             updateNetwork(chainId);
             window.location.reload();
         }
@@ -207,8 +226,13 @@ function App() {
     // ==========================================
 
     function navigateTo(destination) {
+        setNotification({ type: "", message: "" });
+        
         if (!wallet && destination !== "dashboard") {
-            alert("Please connect your wallet to access this section.");
+            setNotification({
+                type: "error",
+                message: "Please connect your wallet to access this section."
+            });
             return;
         }
         setPage(destination);
@@ -363,6 +387,13 @@ function App() {
                         </div>
                     )}
                 </header>
+
+                {/* GLOBAL NOTIFICATION BANNER */}
+                {notification.message && (
+                    <div className={`status-message ${notification.type}`}>
+                        {notification.message}
+                    </div>
+                )}
 
                 {/* ==================================
                     PAGE CONTENT

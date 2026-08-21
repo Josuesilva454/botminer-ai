@@ -16,7 +16,8 @@ function CreateAsset({ setPage, wallet }) {
     weight: "",
     purity: "",
     origin: "",
-    estimatedValue: ""
+    estimatedValue: "",
+    documentHash: ""
   });
 
   // UI STATE
@@ -93,8 +94,8 @@ function CreateAsset({ setPage, wallet }) {
       return;
     }
 
-    if (!Number.isFinite(purity) || purity < 0 || purity > 100) {
-      showStatus("Purity must be between 0 and 100.", "error", 0);
+    if (!Number.isFinite(purity) || purity <= 0 || purity > 100) {
+      showStatus("Purity must be between 0.1% and 100%.", "error", 0);
       return;
     }
 
@@ -125,7 +126,8 @@ function CreateAsset({ setPage, wallet }) {
         ...form,
         weight: form.weight,
         purity: form.purity,
-        estimatedValue: form.estimatedValue || "0"
+        estimatedValue: form.estimatedValue || "0",
+        documentHash: form.documentHash || `DOC-${Date.now()}`
       };
 
       // STEP 1: AI ANALYSIS
@@ -180,17 +182,17 @@ function CreateAsset({ setPage, wallet }) {
       setTokenId(createdTokenId);
 
       // STEP 3: CONTRACT READ CHECKS
-      showStatus("Checking MineralRWA contract...", "info", 3);
+      showStatus("Verifying MineralRWA contract state...", "info", 3);
       try {
         await getContractOwner();
       } catch {
-        console.warn("Could not read contract owner.");
+        showStatus("Unable to verify contract owner state.", "info", 3);
       }
 
       try {
         await getMineralOwner(createdTokenId);
       } catch {
-        console.warn("Could not read NFT owner.");
+        showStatus("Unable to verify NFT ownership state.", "info", 3);
       }
 
       // STEP 4: ON-CHAIN AI VERIFICATION
@@ -220,6 +222,7 @@ function CreateAsset({ setPage, wallet }) {
         origin: mineralData.origin,
         estimatedValue: mineralData.estimatedValue,
         value: mineralData.estimatedValue,
+        documentHash: mineralData.documentHash,
         aiScore,
         riskLevel: result.riskLevel || "UNKNOWN",
         aiRecommendation: result.recommendation || "",
@@ -336,13 +339,25 @@ function CreateAsset({ setPage, wallet }) {
             </div>
 
             <div className="form-group">
-              <label>Estimated Value (USD)</label>
+              <label>Estimated Value (BOT) *</label>
               <input
                 name="estimatedValue"
                 type="number"
                 min="0"
-                placeholder="500000"
+                step="any"
+                placeholder="10"
                 value={form.estimatedValue}
+                onChange={handleChange}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Document Hash (Optional)</label>
+              <input
+                name="documentHash"
+                placeholder="DOC-12345678"
+                value={form.documentHash}
                 onChange={handleChange}
                 disabled={loading}
               />

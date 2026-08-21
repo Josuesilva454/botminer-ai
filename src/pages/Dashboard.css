@@ -547,6 +547,27 @@
   pointer-events: none;
 }
 
+.dashboard-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.dashboard-toast.info {
+  background-color: #0052FF;
+}
+
+.dashboard-toast.error {
+  background-color: #e53e3e;
+}
+
 /* =========================================================
    AI LABEL
    ========================================================= */
