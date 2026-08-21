@@ -1,25 +1,24 @@
 import { ethers } from "ethers";
 
 // ==========================================================
-// BOT CHAIN CONFIG
+// BOT CHAIN CONFIG (MAINNET)
 // ==========================================================
 
-export const BOT_CHAIN_ID = 968;
-export const BOT_CHAIN_ID_HEX = "0x3c8";
-export const BOT_CHAIN_NAME = "BOT Chain Testnet";
-export const BOT_RPC_URL = import.meta.env.VITE_RPC_URL || "https://rpc.bohr.life";
-export const BOT_EXPLORER = "https://scan.bohr.life/";
+export const BOT_CHAIN_ID = 677;
+export const BOT_CHAIN_ID_HEX = "0x2a5";
+export const BOT_CHAIN_NAME = "BOT Chain Mainnet";
+export const BOT_RPC_URL = import.meta.env.VITE_BOTCHAIN_RPC_URL || "https://rpc.botchain.ai";
+export const BOT_EXPLORER = "https://scan.botchain.ai";
 export const BOT_NATIVE_SYMBOL = "BOT";
-
 
 export const MINERAL_RWA_ADDRESS = import.meta.env.VITE_MINERAL_RWA_ADDRESS;
 
 if (!MINERAL_RWA_ADDRESS) {
-  throw new Error("VITE_MINERAL_RWA_ADDRESS não foi configurada no arquivo .env");
+  console.warn("Aviso: VITE_MINERAL_RWA_ADDRESS não foi definida no arquivo .env");
 }
 
 // ==========================================================
-// CONTRACT ABI COMPLETO
+// CONTRACT ABI COMPLETO (MineralRWA.sol)
 // ==========================================================
 
 export const MINERAL_RWA_ABI = [
@@ -117,7 +116,7 @@ export async function getReadContract() {
 }
 
 // ==========================================================
-// FUNÇÕES DE LEITURA E USUÁRIO (Dashboard & Navigation)
+// FUNÇÕES DE LEITURA (Dashboard & Navigation)
 // ==========================================================
 
 export async function getConnectedWallet() {
@@ -191,19 +190,18 @@ export async function createMineral(mineral) {
     let documentHash = (mineral.documentHash || "").trim();
     let uri = (mineral.uri || "").trim();
 
-    // Fallback para URI caso venha vazia do formulário
+    // Fallbacks
     if (!uri) {
         uri = `https://metadata.botchain.ai/minerals/${encodeURIComponent(mineralType.toLowerCase() || "default")}.json`;
     }
 
-    // Fallback para documentHash caso venha vazio do formulário
     if (!documentHash) {
         documentHash = `DOC-${Date.now()}`;
     }
 
-    // 2. Validações prévias espelhadas com o contrato (Requerimentos Solidity)
+    // 2. Validações prévias
     if (mineralType.length === 0 || mineralType.length > 100) {
-        throw new Error("Tipo de mineral invalido (deve ter entre 1 e 100 caracteres)");
+        throw new Error("Tipo de mineral inválido (deve ter entre 1 e 100 caracteres)");
     }
 
     const weightTons = Number(mineral.weight || 0);
@@ -213,28 +211,28 @@ export async function createMineral(mineral) {
 
     const purityPercent = Number(mineral.purity || 0);
     if (purityPercent <= 0 || purityPercent > 100) {
-        throw new Error("Pureza invalida (deve ser entre 0.1% e 100%)");
+        throw new Error("Pureza inválida (deve ser entre 0.1% e 100%)");
     }
 
     if (origin.length === 0 || origin.length > 200) {
-        throw new Error("Origem invalida (deve ter entre 1 e 200 caracteres)");
+        throw new Error("Origem inválida (deve ter entre 1 e 200 caracteres)");
     }
 
     const rawValue = mineral.estimatedValue || mineral.value || "0";
     const valueInWei = ethers.parseEther(String(rawValue));
     if (valueInWei <= 0n) {
-        throw new Error("Valor estimado invalido");
+        throw new Error("Valor estimado inválido");
     }
 
     if (documentHash.length === 0 || documentHash.length > 100) {
-        throw new Error("Hash de documento invalido (deve ter entre 1 e 100 caracteres)");
+        throw new Error("Hash de documento inválido (deve ter entre 1 e 100 caracteres)");
     }
 
     if (uri.length === 0 || uri.length > 500) {
-        throw new Error("URI invalida (deve ter entre 1 e 500 caracteres)");
+        throw new Error("URI inválida (deve ter entre 1 e 500 caracteres)");
     }
 
-    // 3. Conversões de escala (idênticas às esperadas no contrato inteligente)
+    // 3. Conversões de escala
     const weight = BigInt(Math.round(weightTons * 1000));
     const purity = BigInt(Math.round(purityPercent * 100));
 
@@ -291,20 +289,14 @@ export async function verifyMineral(tokenId, aiScore) {
     return { hash: receipt.hash, receipt };
 }
 
-/**
- * COMPRA DO MINERAL (Atualizada para ler o valor direto da blockchain)
- */
 export async function buyMineral(tokenId, priceInEtherOptional = null) {
     const contract = await getContract();
     const token = BigInt(tokenId);
 
-    // 1. Busca as informações atualizadas do mineral na Bohr Chain
+    // 1. Busca as informações atualizadas na BOT Chain Mainnet
     const mineralData = await contract.getMineral(token);
-    
-    // Valor em Wei gravado na criação do ativo
     let valueInWei = mineralData.estimatedValue;
 
-    // Se um valor for passado e for maior que o preço registrado, usa o informado
     if (priceInEtherOptional !== null && priceInEtherOptional !== undefined) {
         const userWei = ethers.parseEther(String(priceInEtherOptional));
         if (userWei >= valueInWei) {
