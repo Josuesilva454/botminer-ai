@@ -34,7 +34,6 @@ The diagram below illustrates the end-to-end lifecycle of an asset: from physica
 
 ```mermaid
 flowchart TD
-    %% Node Styles
     classDef client fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff;
     classDef ai fill:#0f172a,stroke:#8b5cf6,stroke-width:2px,color:#fff;
     classDef chain fill:#022c22,stroke:#10b981,stroke-width:2px,color:#fff;
@@ -65,13 +64,13 @@ flowchart TD
         M[Disabled: Wallet Already Owns Asset] :::alert
     end
 
-    %% Connections
+    %% Corrections applied to connection sequence
     A --> B
-    B --> F
-    F --> C
+    B --> C
     C --> D
     D --> E
-    E --> G
+    E --> F
+    F --> G
     G --> H
     H --> I
     I -->|External Wallet| J
