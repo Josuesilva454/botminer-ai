@@ -1,7 +1,3 @@
-/* =========================================
-   MAIN PAGE & BACKGROUNDS
-   ========================================= */
-
 .page {
   width: 100%;
   min-height: 100vh;
@@ -12,12 +8,12 @@
     radial-gradient(
       circle at 10% 10%,
       rgba(34, 197, 94, 0.08),
-      transparent 35%
+      transparent 30%
     ),
     radial-gradient(
       circle at 90% 15%,
       rgba(59, 130, 246, 0.06),
-      transparent 35%
+      transparent 30%
     ),
     #07110d;
 
@@ -25,11 +21,11 @@
 }
 
 /* =========================================
-   PAGE HEADER
+   Título
    ========================================= */
 
 .page-title {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .page-title h1 {
@@ -37,11 +33,11 @@
 
   color: #f8fafc;
 
-  font-size: 32px;
-  line-height: 1.2;
+  font-size: 34px;
+  line-height: 1.1;
   font-weight: 800;
 
-  letter-spacing: -0.6px;
+  letter-spacing: -0.8px;
 }
 
 .page-title p {
@@ -53,79 +49,7 @@
 }
 
 /* =========================================
-   STATUS CARDS & WALLET BANNER
-   ========================================= */
-
-.wallet-connected,
-.wallet-warning,
-.status-message,
-.transaction {
-  width: 100%;
-  max-width: 1000px;
-  margin-bottom: 20px;
-  padding: 14px 18px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-line;
-  animation: createAssetFade 0.3s ease both;
-}
-
-.wallet-connected {
-  border: 1px solid rgba(34, 197, 94, 0.25);
-  background: rgba(34, 197, 94, 0.08);
-  color: #4ade80;
-}
-
-.wallet-warning {
-  border: 1px solid rgba(234, 179, 8, 0.25);
-  background: rgba(234, 179, 8, 0.08);
-  color: #facc15;
-}
-
-/* Dynamic status feedback messages */
-.status-message.info {
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
-}
-
-.status-message.error {
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
-}
-
-.status-message.success {
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  background: rgba(34, 197, 94, 0.12);
-  color: #4ade80;
-}
-
-/* Completed blockchain transactions log */
-.transaction {
-  border: 1px solid #1d3027;
-  background: rgba(9, 21, 15, 0.8);
-  color: #cbd5e1;
-}
-
-.transaction strong {
-  display: block;
-  color: #4ade80;
-  margin-bottom: 4px;
-}
-
-.transaction p {
-  margin: 2px 0;
-  font-family: monospace;
-  font-size: 13px;
-  word-break: break-all;
-  color: #94a3b8;
-}
-
-/* =========================================
-   FORM PANEL
+   Painel do formulário
    ========================================= */
 
 .form-panel {
@@ -134,7 +58,7 @@
   width: 100%;
   max-width: 1000px;
 
-  padding: 32px;
+  padding: 30px;
 
   box-sizing: border-box;
 
@@ -149,11 +73,10 @@
     );
 
   box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    0 20px 50px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
 
   overflow: hidden;
-  animation: createAssetFade 0.45s ease both;
 }
 
 .form-panel::before {
@@ -176,16 +99,21 @@
 }
 
 /* =========================================
-   GRID & FORM INPUTS
+   Grid
    ========================================= */
 
 .form-grid {
   display: grid;
 
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
 
   gap: 20px;
 }
+
+/* =========================================
+   Grupo do formulário
+   ========================================= */
 
 .form-group {
   display: flex;
@@ -202,6 +130,10 @@
   text-transform: uppercase;
   letter-spacing: 0.6px;
 }
+
+/* =========================================
+   Inputs e Select
+   ========================================= */
 
 .form-group input,
 .form-group select {
@@ -245,17 +177,17 @@
 
   background: #0b1912;
 
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+  box-shadow:
+    0 0 0 3px rgba(34, 197, 94, 0.10);
 }
 
-.form-group input:disabled,
-.form-group select:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+/* =========================================
+   Select
+   ========================================= */
 
 .form-group select {
   cursor: pointer;
+
   appearance: auto;
 }
 
@@ -265,20 +197,21 @@
 }
 
 /* =========================================
-   AI RESULTS & DOCUMENTATION
+   Documentação
    ========================================= */
 
 .upload {
-  margin-top: 24px;
+  margin-top: 28px;
 
-  padding: 20px 24px;
+  padding: 24px;
 
   border: 1px dashed #315040;
   border-radius: 14px;
 
-  background: rgba(3, 12, 8, 0.4);
+  background:
+    rgba(3, 12, 8, 0.35);
 
-  text-align: left;
+  text-align: center;
 
   transition:
     border-color 0.2s ease,
@@ -287,38 +220,82 @@
 
 .upload:hover {
   border-color: #22c55e;
-  background: rgba(34, 197, 94, 0.02);
+
+  background:
+    rgba(34, 197, 94, 0.035);
 }
 
 .upload h3 {
-  margin: 0 0 10px;
+  margin: 0 0 7px;
 
-  color: #22c55e;
+  color: #e9f1ec;
 
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .upload p {
-  margin: 0 0 8px;
+  margin: 0 0 18px;
 
-  color: #a7b7af;
+  color: #718078;
 
-  font-size: 14px;
-}
-
-.upload p:last-child {
-  margin-bottom: 0;
-}
-
-.upload strong {
-  color: #f8fafc;
+  font-size: 13px;
 }
 
 /* =========================================
-   ACTIONS & BUTTONS
+   Input de arquivo
+   ========================================= */
+
+.upload input[type="file"] {
+  display: block;
+
+  width: 100%;
+
+  max-width: 500px;
+
+  margin: 0 auto;
+
+  padding: 10px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #263b31;
+  border-radius: 9px;
+
+  background: #09150f;
+
+  color: #8fa198;
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.upload input[type="file"]::file-selector-button {
+  margin-right: 12px;
+
+  padding: 8px 14px;
+
+  border: 1px solid #285037;
+  border-radius: 7px;
+
+  background: #10251a;
+
+  color: #4ade80;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.upload input[type="file"]::file-selector-button:hover {
+  background: #153322;
+}
+
+/* =========================================
+   Ações
    ========================================= */
 
 .actions {
@@ -336,8 +313,11 @@
   border-top: 1px solid #1a2c24;
 }
 
-.secondary-button,
-.primary-button {
+/* =========================================
+   Botão secundário
+   ========================================= */
+
+.secondary-button {
   display: inline-flex;
 
   align-items: center;
@@ -347,7 +327,12 @@
 
   padding: 0 22px;
 
+  border: 1px solid #2a3d34;
   border-radius: 10px;
+
+  background: #0b1711;
+
+  color: #aab8b1;
 
   font-size: 14px;
   font-weight: 700;
@@ -358,57 +343,94 @@
     background 0.2s ease,
     border-color 0.2s ease,
     color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.2s ease;
 }
 
-.secondary-button {
-  border: 1px solid #2a3d34;
-  background: #0b1711;
-  color: #aab8b1;
-}
-
-.secondary-button:hover:not(:disabled) {
+.secondary-button:hover {
   background: #102119;
+
   border-color: #40584b;
+
   color: #ffffff;
+
   transform: translateY(-1px);
 }
 
+/* =========================================
+   Botão principal
+   ========================================= */
+
 .primary-button {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 46px;
+
+  padding: 0 24px;
+
   border: 1px solid #22c55e;
-  background: linear-gradient(135deg, #16a34a, #22c55e);
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #16a34a,
+      #22c55e
+    );
+
   color: #031109;
+
+  font-size: 14px;
   font-weight: 800;
-  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.18);
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 24px rgba(34, 197, 94, 0.16);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
 }
 
-.primary-button:hover:not(:disabled) {
+.primary-button:hover {
   transform: translateY(-2px);
+
   filter: brightness(1.08);
-  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.28);
+
+  box-shadow:
+    0 12px 30px rgba(34, 197, 94, 0.25);
 }
 
-.primary-button:active:not(:disabled) {
+.primary-button:active {
   transform: translateY(0);
 }
 
-.secondary-button:disabled,
 .primary-button:disabled {
   opacity: 0.5;
+
   cursor: not-allowed;
+
   transform: none;
+
   box-shadow: none;
 }
 
 /* =========================================
-   ANIMATIONS
+   Animação
    ========================================= */
+
+.form-panel {
+  animation: createAssetFade 0.45s ease both;
+}
 
 @keyframes createAssetFade {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px);
   }
 
   to {
@@ -418,7 +440,7 @@
 }
 
 /* =========================================
-   RESPONSIVENESS (MEDIA QUERIES)
+   Tablet
    ========================================= */
 
 @media (max-width: 800px) {
@@ -432,26 +454,43 @@
 
   .form-panel {
     max-width: 100%;
-    padding: 24px;
   }
 }
 
+/* =========================================
+   Mobile
+   ========================================= */
+
 @media (max-width: 600px) {
   .page {
-    padding: 16px;
+    padding: 18px;
   }
 
   .page-title h1 {
-    font-size: 26px;
+    font-size: 28px;
+  }
+
+  .page-title p {
+    font-size: 14px;
   }
 
   .form-panel {
     padding: 20px;
-    border-radius: 14px;
+
+    border-radius: 15px;
+  }
+
+  .form-grid {
+    gap: 16px;
+  }
+
+  .upload {
+    padding: 20px 14px;
   }
 
   .actions {
     flex-direction: column-reverse;
+
     align-items: stretch;
   }
 
@@ -460,3 +499,27 @@
     width: 100%;
   }
 }
+
+/* =========================================
+   Telas muito pequenas
+   ========================================= */
+
+@media (max-width: 400px) {
+  .page {
+    padding: 14px;
+  }
+
+  .form-panel {
+    padding: 16px;
+  }
+
+  .page-title h1 {
+    font-size: 25px;
+  }
+
+  .form-group input,
+  .form-group select {
+    height: 45px;
+  }
+}
+
