@@ -1,6 +1,6 @@
 # 💎 BOTMiner RWA - Tokenized Mineral Assets on Blockchain
 
-A decentralized platform for registering, AI-auditing, and trading **Real World Assets (RWA)** focused on the mining sector, built on the **BOT Chain Testnet**.
+A decentralized platform for registering, AI-auditing, and trading **Real World Assets (RWA)** focused on the mining sector, built on the **BOT Chain Mainnet**.
 
 ---
 
@@ -40,31 +40,30 @@ flowchart TD
     classDef alert fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fff;
 
     subgraph CLIENT ["👤 Mining Company / Issuer"]
-        A[Start: Physical Mineral Batch] :::client
-        B[Upload Reports & Submit Asset Data] :::client
+        A["Start: Physical Mineral Batch"]
+        B["Upload Reports & Submit Asset Data"]
     end
 
     subgraph ENGINE ["🤖 BOTMiner AI Engine"]
-        C[Verify Documentation & IPFS Hash] :::ai
-        D{Spot Price & Coherence Check} :::ai
-        E[Generate AI Score 0-100] :::ai
+        C["Verify Documentation & IPFS Hash"]
+        D{"Spot Price & Coherence Check"}
+        E["Generate AI Score 0-100"]
     end
 
-    subgraph BLOCKCHAIN ["⛓️ Smart Contract - BOT Chain"]
-        F[Mint NFT Token - createMineral] :::chain
-        G[Record AI Score - verifyMineral] :::chain
-        H[List Asset on Marketplace] :::chain
+    subgraph MAINNET ["⛓️ Smart Contract - BOT Chain Mainnet"]
+        F["Mint NFT Token - createMineral"]
+        G["Record AI Score - verifyMineral"]
+        H["List Asset on Marketplace"]
     end
 
     subgraph MARKET ["🛒 Marketplace / Buyer"]
-        I{Interact with Asset} :::client
-        J[Buyer Connects Web3 Wallet] :::client
-        K[Execute Purchase - buyMineral] :::chain
-        L[Automated Ownership Transfer] :::chain
-        M[Disabled: Wallet Already Owns Asset] :::alert
+        I{"Interact with Asset"}
+        J["Buyer Connects Mainnet Wallet"]
+        K["Execute Purchase - buyMineral"]
+        L["Automated Ownership Transfer"]
+        M["Disabled: Wallet Already Owns Asset"]
     end
 
-    %% Corrections applied to connection sequence
     A --> B
     B --> C
     C --> D
@@ -76,4 +75,9 @@ flowchart TD
     I -->|External Wallet| J
     J --> K
     K --> L
-    I -->|Owner's Connected Wallet| M
+    I -->|Owner Connected Wallet| M
+
+    class A,B,I,J client;
+    class C,D,E ai;
+    class F,G,H,K,L chain;
+    class M alert;
